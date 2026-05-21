@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}Despesas - Financeiro Familiar{% endblock %}
+{% block page_title %}Controle de Despesas{% endblock %}
+
+{% block content %}
+
+<!-- Filters -->
+<div class="card" style="margin-bottom: 25px;">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('expenses') }}" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: end;">
+
+            <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
+                <label class="form-label">Mes</label>
+                <input type="month" name="month" class="form-control" value="{{ filter_month }}">
+            </div>
+
+            <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
+                <label class="form-label">Tipo</label>
+                <select name="type" class="form-control">
+                    <option value="">Todos</option>
+
+                    <option value="individual"
+                        {% if filter_type == 'individual' %}selected{% endif %}>
+                        Individual
+                    </option>
+
+                    <option value="compartilhado"
+                        {% if filter_type == 'compartilhado' %}selected{% endif %}>
+                        Compartilhado
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
+                <label class="form-label">Categoria</label>
+
+                <select name="category" class="form-control">
+                    <option value="">Todas</option>
+
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}"
+                        {% if filter_category == cat.id|string %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
+                <label class="form-label">Pessoa</label>
+
+                <select name="person" class="form-control">
+                    <option value="">Todas</option>
+
+                    {% for member in family_members %}
+                    <option value="{{ member.id }}"
+                        {% if filter_person == member.id|string %}selected{% endif %}>
+                        {{ member.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+
+                <a href="{{ url_for('expenses') }}" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i>
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- Add Button -->
+<div style="margin-bottom: 25px;">
+    <a href="{{ url_for('add_expense') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nova Despesa
+    </a>
+</div>
+
+<!-- Expenses Table -->
+<div class="card">
+    <div class="card-body" style="padding: 0;">
+
+        <div class="table-container">
+
+            <table class="data-table">
+
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Descricao</th>
+                        <th>Categoria</th>
+                        <th>Pessoa</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>Info</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for expense in expenses %}
+
+                    <tr>
+
+                        <td>
+                            {{ expense.expense_date }}
+                        </td>
+
+                        <td>
+
+                            <strong>
+                                {{ expense.description }}
+                            </strong>
+
+                            {% if expense.notes %}
+                            <br>
+                            <small style="color: var(--gray);">
+                                {{ expense.notes }}
+                            </small>
+                            {% endif %}
+
+                            {% if expense.is_generated %}
+                            <br>
+
+                            <small style="color: var(--warning); font-weight: 600;">
+                                {% if expense.generation_type == 'recorrente' %}
+                                    <i class="fas fa-sync-alt"></i> Conta fixa
+                                {% elif expense.generation_type == 'parcela' %}
+                                    <i class="fas fa-credit-card"></i> Parcelado
+                                {% endif %}
+                            </small>
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {% if expense.category_name %}
+
+                            <span class="badge"
+                                  style="background: {{ expense.category_color }}20;
+                                         color: {{ expense.category_color }};">
+
+                                {{ expense.category_name }}
+
+                            </span>
+
+                            {% else %}
+
+                            <span class="badge badge-secondary">
+                                -
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ expense.person_name }}
+                        </td>
+
+                        <td>
+
+                            <span class="badge
+                                {% if expense.expense_type == 'compartilhado' %}
+                                    badge-primary
+                                {% else %}
+                                    badge-info
+                                {% endif %}">
+
+                                {{ expense.expense_type|title }}
+
+                            </span>
+
+                        </td>
+
+                        <td class="currency" style="font-weight: 600;">
+                            R$ {{ "%.2f"|format(expense.amount) }}
+                        </td>
+
+                        <td>
+
+                            {% if expense.is_recurring %}
+                            <span class="badge badge-warning"
+                                  title="Despesa fixa/recorrente">
+                                <i class="fas fa-sync-alt"></i>
+                            </span>
+                            {% endif %}
+
+                            {% if expense.is_installment %}
+                            <span class="badge badge-danger"
+                                  title="Parcela {{ expense.installment_number }}/{{ expense.installment_total }}">
+                                <i class="fas fa-credit-card"></i>
+                            </span>
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <div style="display: flex; gap: 5px;">
+
+                                {% if expense.can_edit %}
+                                <a href="{{ url_for('edit_expense', id=expense.edit_id) }}"
+                                   class="btn btn-sm btn-icon"
+                                   style="background: var(--info); color: white;"
+                                   title="Editar">
+
+                                    <i class="fas fa-edit"></i>
+
+                                </a>
+                                {% endif %}
+
+                                {% if expense.can_delete %}
+                                <form method="POST"
+                                      action="{{ url_for('delete_expense', id=expense.delete_id) }}"
+                                      data-confirm="Tem certeza que deseja excluir esta despesa?"
+                                      style="display: inline;">
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-icon"
+                                            style="background: var(--danger); color: white;"
+                                            title="Excluir">
+
+                                        <i class="fas fa-trash"></i>
+
+                                    </button>
+
+                                </form>
+                                {% endif %}
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+
+                        <td colspan="8"
+                            style="text-align: center;
+                                   color: var(--gray);
+                                   padding: 50px;">
+
+                            <i class="fas fa-inbox"
+                               style="font-size: 3rem;
+                                      margin-bottom: 15px;
+                                      display: block;">
+                            </i>
+
+                            <p>
+                                Nenhuma despesa encontrada para este periodo.
+                            </p>
+
+                            <a href="{{ url_for('add_expense') }}"
+                               class="btn btn-primary"
+                               style="margin-top: 15px;">
+
+                                <i class="fas fa-plus"></i>
+                                Adicionar Despesa
+
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

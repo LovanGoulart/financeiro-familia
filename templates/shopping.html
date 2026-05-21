@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Lista de Compras - Financeiro Familiar{% endblock %}
+{% block page_title %}Lista de Compras{% endblock %}
+
+{% block content %}
+<!-- Add Item -->
+<div class="card" style="margin-bottom: 25px;">
+    <div class="card-header">
+        <span class="card-title"><i class="fas fa-plus"></i> Adicionar Item</span>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('add_shopping_item') }}" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: end;">
+            <div class="form-group" style="flex: 2; min-width: 200px; margin-bottom: 0;">
+                <label class="form-label">Nome *</label>
+                <input type="text" name="name" class="form-control" placeholder="Ex: Leite" required>
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 120px; margin-bottom: 0;">
+                <label class="form-label">Quantidade</label>
+                <input type="text" name="quantity" class="form-control" placeholder="Ex: 2 litros">
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
+                <label class="form-label">Categoria</label>
+                <select name="category_id" class="form-control">
+                    <option value="">Selecione...</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="flex: 2; min-width: 200px; margin-bottom: 0;">
+                <label class="form-label">Observacoes</label>
+                <input type="text" name="notes" class="form-control" placeholder="Observacoes">
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Adicionar
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Shopping Items -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title"><i class="fas fa-shopping-basket"></i> Itens da Lista</span>
+    </div>
+    <div class="card-body">
+        {% for item in items %}
+        <div class="shopping-item {% if item.is_bought %}bought{% endif %}" id="item-{{ item.id }}">
+            <input type="checkbox" class="shopping-checkbox" data-id="{{ item.id }}" {% if item.is_bought %}checked{% endif %}>
+            <div class="shopping-info">
+                <div class="shopping-name">{{ item.name }}</div>
+                <div class="shopping-meta">
+                    {% if item.quantity %}Qtd: {{ item.quantity }}{% endif %}
+                    {% if item.category_name %}| <span style="color: {{ item.category_color }}">{{ item.category_name }}</span>{% endif %}
+                    {% if item.notes %}| {{ item.notes }}{% endif %}
+                    | Por: {{ item.creator_name }}
+                </div>
+            </div>
+            <div class="shopping-actions">
+                <form method="POST" action="{{ url_for('delete_shopping_item', id=item.id) }}" data-confirm="Remover este item?" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-icon" style="background: var(--danger); color: white;" title="Remover">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align: center; color: var(--gray); padding: 50px;">
+            <i class="fas fa-shopping-basket" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
+            <p>Lista de compras vazia.</p>
+            <p style="font-size: 0.9rem; margin-top: 10px;">Adicione itens acima para comecar.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

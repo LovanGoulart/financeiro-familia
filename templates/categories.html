@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Categorias - Financeiro Familiar{% endblock %}
+{% block page_title %}Categorias{% endblock %}
+
+{% block content %}
+<!-- Add Category -->
+<div class="card" style="margin-bottom: 25px;">
+    <div class="card-header">
+        <span class="card-title"><i class="fas fa-plus"></i> Nova Categoria</span>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('add_category') }}" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: end;">
+            <div class="form-group" style="flex: 2; min-width: 200px; margin-bottom: 0;">
+                <label class="form-label">Nome *</label>
+                <input type="text" name="name" class="form-control" placeholder="Nome da categoria" required>
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 120px; margin-bottom: 0;">
+                <label class="form-label">Icone (FontAwesome)</label>
+                <input type="text" name="icon" class="form-control" placeholder="tag" value="tag">
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 120px; margin-bottom: 0;">
+                <label class="form-label">Cor</label>
+                <input type="color" name="color" class="form-control" value="#6366f1" style="height: 44px; padding: 4px;">
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Adicionar
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Categories Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+    {% for category in categories %}
+    <div class="card animate-slide-up">
+        <div class="card-body" style="display: flex; align-items: center; gap: 15px;">
+            <div style="width: 50px; height: 50px; border-radius: 12px; background: {{ category.color }}20; color: {{ category.color }}; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                <i class="fas fa-{{ category.icon }}"></i>
+            </div>
+            <div style="flex: 1;">
+                <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 4px;">{{ category.name }}</h3>
+                <span style="font-size: 0.8rem; color: var(--gray);">ID: {{ category.id }}</span>
+            </div>
+            <div style="display: flex; gap: 5px;">
+                <button type="button" class="btn btn-sm btn-icon" style="background: var(--info); color: white;" onclick="editCategory({{ category.id }}, '{{ category.name }}', '{{ category.icon }}', '{{ category.color }}')" title="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <form method="POST" action="{{ url_for('delete_category', id=category.id) }}" data-confirm="Tem certeza que deseja excluir esta categoria?" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-icon" style="background: var(--danger); color: white;" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: 50px; color: var(--gray);">
+        <i class="fas fa-tags" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
+        <p>Nenhuma categoria encontrada.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+    <div style="background: var(--bg-card); border-radius: 16px; padding: 30px; width: 90%; max-width: 450px; box-shadow: var(--shadow-lg);">
+        <h3 style="margin-bottom: 20px; font-size: 1.2rem;"><i class="fas fa-edit"></i> Editar Categoria</h3>
+        <form id="editForm" method="POST" action="">
+            <div class="form-group">
+                <label class="form-label">Nome</label>
+                <input type="text" name="name" id="editName" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Icone</label>
+                <input type="text" name="icon" id="editIcon" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Cor</label>
+                <input type="color" name="color" id="editColor" class="form-control" style="height: 44px; padding: 4px;">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;"><i class="fas fa-save"></i> Salvar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()"><i class="fas fa-times"></i> Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function editCategory(id, name, icon, color) {
+    document.getElementById('editForm').action = '/categories/edit/' + id;
+    document.getElementById('editName').value = name;
+    document.getElementById('editIcon').value = icon;
+    document.getElementById('editColor').value = color;
+    document.getElementById('editModal').style.display = 'flex';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeEditModal();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}{% if action == 'add' %}Nova Despesa{% else %}Editar Despesa{% endif %} - Financeiro Familiar{% endblock %}
+{% block page_title %}{% if action == 'add' %}Nova Despesa{% else %}Editar Despesa{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 700px; margin: 0 auto;">
+    <div class="card-header">
+        <span class="card-title">
+            {% if action == 'add' %}
+            <i class="fas fa-plus-circle"></i> Nova Despesa
+            {% else %}
+            <i class="fas fa-edit"></i> Editar Despesa
+            {% endif %}
+        </span>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{% if action == 'add' %}{{ url_for('add_expense') }}{% else %}{{ url_for('edit_expense', id=expense.id) }}{% endif %}">
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Descricao *</label>
+                    <input type="text" name="description" class="form-control" placeholder="Ex: Supermercado" 
+                           value="{{ expense.description if expense else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Valor (R$) *</label>
+                    <input type="number" name="amount" class="form-control" placeholder="0,00" step="0.01" min="0.01"
+                           value="{{ "%.2f"|format(expense.amount) if expense else '' }}" required>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Data *</label>
+                    <input type="date" name="expense_date" class="form-control"
+                           value="{{ expense.expense_date if expense else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Categoria</label>
+                    <select name="category_id" class="form-control">
+                        <option value="">Selecione...</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if expense and expense.category_id == cat.id %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Responsavel *</label>
+                    <select name="person_id" class="form-control" required>
+                        {% for member in family_members %}
+                        <option value="{{ member.id }}" 
+                                {% if expense and expense.person_id == member.id %}selected{% elif not expense and current_user.id == member.id %}selected{% endif %}>
+                            {{ member.name }} {% if member.role == 'admin' %}(Admin){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tipo *</label>
+                    <select name="expense_type" class="form-control" required>
+                        <option value="individual" {% if expense and expense.expense_type == 'individual' %}selected{% endif %}>Individual</option>
+                        <option value="compartilhado" {% if expense and expense.expense_type == 'compartilhado' %}selected{% endif %}>Compartilhado</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Observacoes</label>
+                <textarea name="notes" class="form-control" placeholder="Observacoes adicionais...">{{ expense.notes if expense else '' }}</textarea>
+            </div>
+
+            <!-- Recurring Expense -->
+            <div class="form-group">
+                <label class="form-check" style="cursor: pointer;">
+                    <input type="checkbox" name="is_recurring" id="is_recurring" class="form-check-input" 
+                           {% if expense and expense.is_recurring %}checked{% endif %}>
+                    <span>Despesa Fixa/Recorrente</span>
+                </label>
+            </div>
+
+            <div id="recurring-fields" class="form-group" style="display: none; background: var(--bg-primary); padding: 15px; border-radius: 10px;">
+                <label class="form-label">Frequencia</label>
+                <select name="recurring_frequency" class="form-control">
+                    <option value="mensal" {% if expense and expense.recurring_frequency == 'mensal' %}selected{% endif %}>Mensal</option>
+                    <option value="semanal" {% if expense and expense.recurring_frequency == 'semanal' %}selected{% endif %}>Semanal</option>
+                    <option value="anual" {% if expense and expense.recurring_frequency == 'anual' %}selected{% endif %}>Anual</option>
+                </select>
+            </div>
+
+            <!-- Installment Expense -->
+            <div class="form-group">
+                <label class="form-check" style="cursor: pointer;">
+                    <input type="checkbox" name="is_installment" id="is_installment" class="form-check-input"
+                           {% if expense and expense.is_installment %}checked{% endif %}>
+                    <span>Compra Parcelada</span>
+                </label>
+            </div>
+
+            <div id="installment-fields" class="form-group" style="display: none; background: var(--bg-primary); padding: 15px; border-radius: 10px;">
+                <div class="grid-2">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Total de Parcelas</label>
+                        <input type="number" name="installment_total" class="form-control" min="1" 
+                               value="{{ expense.installment_total if expense else '1' }}">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Parcela Atual</label>
+                        <input type="number" name="installment_number" class="form-control" min="1"
+                               value="{{ expense.installment_number if expense else '1' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 25px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    <i class="fas fa-save"></i>
+                    {% if action == 'add' %}Salvar Despesa{% else %}Atualizar Despesa{% endif %}
+                </button>
+                <a href="{{ url_for('expenses') }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

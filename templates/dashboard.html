@@ -1,0 +1,472 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Financeiro Familiar{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- RESUMO -->
+<div class="stats-grid">
+
+    <div class="stat-card primary">
+        <div class="stat-icon">
+            <i class="fas fa-wallet"></i>
+        </div>
+
+        <div class="stat-label">
+            Total do Mes
+        </div>
+
+        <div class="stat-value currency">
+            R$ {{ "%.2f"|format(total_month) }}
+        </div>
+    </div>
+
+    <div class="stat-card success">
+        <div class="stat-icon">
+            <i class="fas fa-handshake"></i>
+        </div>
+
+        <div class="stat-label">
+            Compartilhado
+        </div>
+
+        <div class="stat-value currency">
+            R$ {{ "%.2f"|format(shared_month) }}
+        </div>
+    </div>
+
+    <div class="stat-card info">
+        <div class="stat-icon">
+            <i class="fas fa-user"></i>
+        </div>
+
+        <div class="stat-label">
+            Individual
+        </div>
+
+        <div class="stat-value currency">
+            R$ {{ "%.2f"|format(individual_month) }}
+        </div>
+    </div>
+
+    <div class="stat-card warning">
+        <div class="stat-icon">
+            <i class="fas fa-sync-alt"></i>
+        </div>
+
+        <div class="stat-label">
+            Fixas
+        </div>
+
+        <div class="stat-value currency">
+            R$ {{ "%.2f"|format(fixed_month) }}
+        </div>
+    </div>
+
+    <div class="stat-card danger">
+        <div class="stat-icon">
+            <i class="fas fa-credit-card"></i>
+        </div>
+
+        <div class="stat-label">
+            Parcelamentos
+        </div>
+
+        <div class="stat-value currency">
+            R$ {{ "%.2f"|format(installments_month) }}
+        </div>
+    </div>
+
+</div>
+
+<!-- DIVISAO -->
+{% if member_count > 1 and division %}
+<div class="card" style="margin-bottom: 25px;">
+
+    <div class="card-header">
+        <span class="card-title">
+            <i class="fas fa-balance-scale"></i>
+            Divisao de Gastos Compartilhados
+        </span>
+    </div>
+
+    <div class="card-body">
+
+        <div class="division-grid">
+
+            {% for d in division %}
+
+            <div class="division-item {% if d.owes %}owes{% elif d.receives %}receives{% else %}balanced{% endif %}">
+
+                <div class="division-person">
+                    {{ d.name }}
+                </div>
+
+                <div class="division-amount {% if d.owes %}owes{% elif d.receives %}receives{% else %}balanced{% endif %}">
+
+                    {% if d.owes %}
+                        Deve R$ {{ "%.2f"|format(d.amount) }}
+                    {% elif d.receives %}
+                        Recebe R$ {{ "%.2f"|format(d.amount) }}
+                    {% else %}
+                        Equilibrado
+                    {% endif %}
+
+                </div>
+
+                <div class="division-status">
+                    Pagou: R$ {{ "%.2f"|format(d.paid) }}
+                    <br>
+                    Ideal: R$ {{ "%.2f"|format(d.ideal) }}
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+{% endif %}
+
+<!-- GRAFICOS -->
+<div class="grid-2">
+
+    <!-- CATEGORIAS -->
+    <div class="card">
+
+        <div class="card-header">
+            <span class="card-title">
+                <i class="fas fa-chart-pie"></i>
+                Gastos por Categoria
+            </span>
+        </div>
+
+        <div class="card-body">
+
+            {% if category_data %}
+
+            <div class="chart-container">
+                <canvas
+                    id="categoryChart"
+                    data-labels='{{ category_data|map(attribute="name")|list|tojson }}'
+                    data-values='{{ category_data|map(attribute="total")|list|tojson }}'
+                    data-colors='{{ category_data|map(attribute="color")|list|tojson }}'>
+                </canvas>
+            </div>
+
+            {% else %}
+
+            <div style="text-align:center; padding:40px; color: var(--gray);">
+                <i class="fas fa-chart-pie" style="font-size: 2rem; margin-bottom: 10px; display:block;"></i>
+                Nenhum dado encontrado
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    <!-- EVOLUCAO -->
+    <div class="card">
+
+        <div class="card-header">
+            <span class="card-title">
+                <i class="fas fa-chart-line"></i>
+                Evolucao Mensal
+            </span>
+        </div>
+
+        <div class="card-body">
+
+            <div class="chart-container">
+                <canvas
+                    id="monthlyChart"
+                    data-labels='{{ monthly_data|map(attribute="month")|list|tojson }}'
+                    data-values='{{ monthly_data|map(attribute="total")|list|tojson }}'>
+                </canvas>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- TABELAS -->
+<div class="grid-2" style="margin-top: 25px;">
+
+    <!-- ULTIMAS MOVIMENTACOES -->
+    <div class="card">
+
+        <div class="card-header">
+
+            <span class="card-title">
+                <i class="fas fa-history"></i>
+                Ultimas Movimentacoes
+            </span>
+
+            <a href="{{ url_for('expenses') }}" class="btn btn-sm btn-primary">
+                Ver todas
+            </a>
+
+        </div>
+
+        <div class="card-body" style="padding: 0;">
+
+            <div class="table-container">
+
+                <table class="data-table">
+
+                    <thead>
+                        <tr>
+                            <th>Descricao</th>
+                            <th>Pessoa</th>
+                            <th>Valor</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for expense in recent_expenses %}
+
+                        <tr>
+
+                            <td>
+
+                                <div style="display:flex; align-items:center; gap:10px;">
+
+                                    {% if expense.category_color %}
+                                    <span style="
+                                        width: 10px;
+                                        height: 10px;
+                                        border-radius: 50%;
+                                        background-color: {{ expense.category_color or '#6c757d' }};
+                                        display:inline-block;"></span>
+                                    {% endif %}
+
+                                    <div>
+
+                                        <strong>
+                                            {{ expense.description }}
+                                        </strong>
+
+                                        <br>
+
+                                        <small style="color: var(--gray);">
+
+                                            {% if expense.is_recurring %}
+                                                <i class="fas fa-sync-alt"></i> Fixa
+                                            {% endif %}
+
+                                            {% if expense.is_installment %}
+                                                <i class="fas fa-credit-card"></i>
+                                                {{ expense.installment_number }}/{{ expense.installment_total }}
+                                            {% endif %}
+
+                                        </small>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                            <td>
+                                {{ expense.person_name }}
+                            </td>
+
+                            <td class="currency">
+                                R$ {{ "%.2f"|format(expense.amount) }}
+                            </td>
+
+                            <td>
+                                {{ expense.expense_date }}
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+
+                            <td colspan="4" style="text-align:center; padding:40px; color: var(--gray);">
+
+                                <i class="fas fa-inbox" style="font-size:2rem; margin-bottom:10px; display:block;"></i>
+
+                                Nenhuma movimentacao encontrada
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- PROXIMAS PARCELAS -->
+    <div class="card">
+
+        <div class="card-header">
+
+            <span class="card-title">
+                <i class="fas fa-calendar-alt"></i>
+                Proximas Parcelas
+            </span>
+
+        </div>
+
+        <div class="card-body" style="padding: 0;">
+
+            <div class="table-container">
+
+                <table class="data-table">
+
+                    <thead>
+                        <tr>
+                            <th>Descricao</th>
+                            <th>Parcela</th>
+                            <th>Valor</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for inst in next_installments %}
+
+                        <tr>
+
+                            <td>
+                                {{ inst.description }}
+                            </td>
+
+                            <td>
+
+                                <span class="badge badge-warning">
+
+                                    {{ inst.installment_number }}/{{ inst.installment_total }}
+
+                                </span>
+
+                            </td>
+
+                            <td class="currency">
+                                R$ {{ "%.2f"|format(inst.amount) }}
+                            </td>
+
+                            <td>
+                                {{ inst.expense_date }}
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+
+                            <td colspan="4" style="text-align:center; padding:40px; color: var(--gray);">
+
+                                <i class="fas fa-check-circle" style="font-size:2rem; margin-bottom:10px; display:block;"></i>
+
+                                Nenhuma parcela pendente
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- LISTA DE COMPRAS -->
+<div class="card" style="margin-top: 25px;">
+
+    <div class="card-header">
+
+        <span class="card-title">
+            <i class="fas fa-shopping-basket"></i>
+            Lista de Compras
+        </span>
+
+        <a href="{{ url_for('shopping') }}" class="btn btn-sm btn-primary">
+            Ver completa
+        </a>
+
+    </div>
+
+    <div class="card-body">
+
+        {% for item in shopping_items[:5] %}
+
+        <div class="shopping-item {% if item.is_bought %}bought{% endif %}">
+
+            <input
+                type="checkbox"
+                class="shopping-checkbox"
+                data-id="{{ item.id }}"
+                {% if item.is_bought %}checked{% endif %}
+            >
+
+            <div class="shopping-info">
+
+                <div class="shopping-name">
+                    {{ item.name }}
+                </div>
+
+                <div class="shopping-meta">
+
+                    {% if item.quantity %}
+                        Qtd: {{ item.quantity }}
+                    {% endif %}
+
+                    {% if item.category_name %}
+                        | {{ item.category_name }}
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% else %}
+
+        <div style="text-align:center; padding:40px; color: var(--gray);">
+
+            <i class="fas fa-shopping-basket" style="font-size:2rem; margin-bottom:10px; display:block;"></i>
+
+            Lista de compras vazia
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endblock %}
