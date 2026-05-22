@@ -356,11 +356,15 @@
 
                             <td>
 
-                                <span class="badge badge-warning">
-
-                                    {{ inst.installment_number }}/{{ inst.installment_total }}
-
-                                </span>
+                               {% if inst.is_installment %}
+                                    <span class="badge badge-warning">
+                                         {{ inst.installment_number }}/{{ inst.installment_total }}
+                                      </span>
+                                {% elif inst.is_recurring %}
+                                        <span class="badge badge-info">
+                                             Fixa
+                                        </span>
+                                {% endif %}
 
                             </td>
 

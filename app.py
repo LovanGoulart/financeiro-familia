@@ -488,20 +488,44 @@ def dashboard(current_user, family_email, is_admin):
                 'amount': abs(difference)
             })
 
-    # PROXIMAS PARCELAS (busca as parcelas futuras)
+    # PROXIMAS PARCELAS (somente do proximo mes)
     next_installments = []
-    today = datetime.now().strftime('%Y-%m-%d')
-    for m in range(0, 3):  # Proximos 3 meses
-        check_month = current_month + m
-        check_year = current_year + (check_month - 1) // 12
-        check_month = ((check_month - 1) % 12) + 1
 
-        inst = generate_installment_expenses(conn, member_ids, check_year, check_month)
-        for i in inst:
-            if i['expense_date'] >= today:
-                next_installments.append(i)
+    # calcula o proximo mes
+    if current_month == 12:
+        next_month = 1
+        next_year = current_year + 1
+    else:
+        next_month = current_month + 1
+        next_year = current_year
 
-    next_installments = sorted(next_installments, key=lambda x: x['expense_date'])[:5]
+       # PARCELAS do proximo mes
+    next_installments = generate_installment_expenses(
+        conn,
+        member_ids,
+        next_year,
+        next_month
+    )
+
+    # DESPESAS FIXAS do proximo mes
+    next_fixed = generate_recurring_expenses(
+        conn,
+        member_ids,
+        next_year,
+        next_month
+    )
+
+    # junta parcelas + fixas
+    next_installments.extend(next_fixed)
+
+    # ordena por data
+    next_installments = sorted(
+        next_installments,
+        key=lambda x: x['expense_date']
+    )
+
+    # ULTIMAS MOVIMENTACOES (apenas despesas reais, nao geradas)
+    query = "SELECT e.*, u.name as person_name, c.name as category_name, c.color as category_color FROM expenses e JOIN users u ON e.person_id = u.id LEFT JOIN categories c ON e.category_id = c.id WHERE e.person_id IN ({}) ORDER BY e.created_at DESC LIMIT 10".format(','.join('?' * len(member_ids)))
 
     # ULTIMAS MOVIMENTACOES (apenas despesas reais, nao geradas)
     query = "SELECT e.*, u.name as person_name, c.name as category_name, c.color as category_color FROM expenses e JOIN users u ON e.person_id = u.id LEFT JOIN categories c ON e.category_id = c.id WHERE e.person_id IN ({}) ORDER BY e.created_at DESC LIMIT 10".format(','.join('?' * len(member_ids)))
