@@ -755,63 +755,129 @@ def add_expense(current_user, family_email, is_admin):
     if request.method == 'POST':
         description = request.form.get('description', '').strip()
         amount = float(request.form.get('amount', 0))
-        expense_date = request.form.get('expense_date', datetime.now().strftime('%Y-%m-%d'))
+        expense_date = request.form.get(
+            'expense_date',
+            datetime.now().strftime('%Y-%m-%d')
+        )
         category_id = request.form.get('category_id')
         person_id = int(request.form.get('person_id', current_user['id']))
         expense_type = request.form.get('expense_type', 'individual')
         notes = request.form.get('notes', '').strip()
+
         is_recurring = 1 if request.form.get('is_recurring') else 0
-        recurring_frequency = request.form.get('recurring_frequency', 'mensal')
+        recurring_frequency = request.form.get(
+            'recurring_frequency',
+            'mensal'
+        )
+
         is_installment = 1 if request.form.get('is_installment') else 0
-        installment_total = int(request.form.get('installment_total', 1))
-        installment_number = int(request.form.get('installment_number', 1))
+        installment_total = int(
+            request.form.get('installment_total', 1)
+        )
+        installment_number = int(
+            request.form.get('installment_number', 1)
+        )
 
         if not description or amount <= 0:
             flash('Preencha descricao e valor validos.', 'warning')
-            categories = conn.execute('SELECT * FROM categories ORDER BY name').fetchall()
+
+            categories = conn.execute(
+                'SELECT * FROM categories ORDER BY name'
+            ).fetchall()
+
             family_members = get_family_members(family_email)
+
             conn.close()
-            return render_template('expense_form.html',
-                current_user=current_user, is_admin=is_admin,
-                categories=[dict(c) for c in categories], family_members=family_members,
-                expense=None, action='add'
+
+            return render_template(
+                'expense_form.html',
+                current_user=current_user,
+                is_admin=is_admin,
+                categories=[dict(c) for c in categories],
+                family_members=family_members,
+                expense=None,
+                action='add',
+                now=datetime.now()
             )
 
         member_ids = get_family_member_ids(family_email)
+
         if person_id not in member_ids:
             conn.close()
             abort(403)
 
-        # Para parcelas, armazenamos o valor total da compra, nao o valor da parcela
-        # O valor da parcela sera calculado na visualizacao
-
         installment_group_id = None
-        if is_installment:
-            installment_group_id = "inst_{}_{}".format(datetime.now().strftime('%Y%m%d%H%M%S'), person_id)
 
-        sql = """INSERT INTO expenses 
-            (description, amount, expense_date, category_id, person_id, expense_type, 
-             is_recurring, recurring_frequency, next_due_date, is_installment, 
-             installment_total, installment_number, installment_group_id, notes, created_by) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
-        conn.execute(sql, (description, amount, expense_date, category_id, person_id, 
-                          expense_type, is_recurring, recurring_frequency, None, 
-                          is_installment, installment_total, installment_number, 
-                          installment_group_id, notes, current_user['id']))
+        if is_installment:
+            installment_group_id = "inst_{}_{}".format(
+                datetime.now().strftime('%Y%m%d%H%M%S'),
+                person_id
+            )
+
+        sql = """
+            INSERT INTO expenses 
+            (
+                description,
+                amount,
+                expense_date,
+                category_id,
+                person_id,
+                expense_type,
+                is_recurring,
+                recurring_frequency,
+                next_due_date,
+                is_installment,
+                installment_total,
+                installment_number,
+                installment_group_id,
+                notes,
+                created_by
+            ) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+
+        conn.execute(sql, (
+            description,
+            amount,
+            expense_date,
+            category_id,
+            person_id,
+            expense_type,
+            is_recurring,
+            recurring_frequency,
+            None,
+            is_installment,
+            installment_total,
+            installment_number,
+            installment_group_id,
+            notes,
+            current_user['id']
+        ))
 
         conn.commit()
         conn.close()
+
         flash('Despesa adicionada com sucesso!', 'success')
+
         return redirect(url_for('expenses'))
 
-    categories = conn.execute('SELECT * FROM categories ORDER BY name').fetchall()
+    categories = conn.execute(
+        'SELECT * FROM categories ORDER BY name'
+    ).fetchall()
+
     family_members = get_family_members(family_email)
+
     conn.close()
 
-    return render_template('expense_form.html',
-        current_user=current_user, is_admin=is_admin,
-        categories=[dict(c) for c in categories], family_members=family_members,
-        expense=None, action='add'
+    return render_template(
+        'expense_form.html',
+        current_user=current_user,
+        is_admin=is_admin,
+        categories=[dict(c) for c in categories],
+        family_members=family_members,
+        expense=None,
+        action='add',
+        now=datetime.now()
     )
 
 @app.route('/expenses/edit/<int:id>', methods=['GET', 'POST'])
