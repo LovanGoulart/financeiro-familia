@@ -114,15 +114,133 @@
 
     <small style="display:block; margin-top:8px; color: var(--gray);">
         {% if spent_more %}
-            Gastou {{ "%.1f"|format(percent_change) }}% a mais
+            Gastou {{ "%.1f"|format(percent_change) }}% a mais que o mês passado
         {% else %}
-            Gastou {{ "%.1f"|format(percent_change|abs) }}% a menos
+            Gastou {{ "%.1f"|format(percent_change|abs) }}% a menos que o mês passado
         {% endif %}
     </small>
 
 </div>
 
+ <div class="stat-card primary">
+
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+
+                <div class="stat-label">
+                    Próximo mês
+                </div>
+
+                <div class="stat-value currency">
+                    R$ {{ "%.2f"|format(next_month_total) }}
+                </div>
+
+            </div>
+
 </div>
+
+<!-- GASTOS PREVISTOS PROXIMO MES (EXIBE OS BLOCOS - DASHBOARD FICA MUITO EXTENSO)
+<div class="card" style="margin-bottom: 25px;">
+
+    <div class="card-header">
+
+        <span class="card-title">
+            <i class="fas fa-calendar-alt"></i>
+            Previsao do Proximo Mes
+        </span>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="stats-grid">
+
+            <div class="stat-card primary">
+
+                <div class="stat-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+
+                <div class="stat-label">
+                    Total Previsto
+                </div>
+
+                <div class="stat-value currency">
+                    R$ {{ "%.2f"|format(next_month_total) }}
+                </div>
+
+            </div>
+
+            <div class="stat-card success">
+
+                <div class="stat-icon">
+                    <i class="fas fa-handshake"></i>
+                </div>
+
+                <div class="stat-label">
+                    Compartilhado
+                </div>
+
+                <div class="stat-value currency">
+                    R$ {{ "%.2f"|format(next_month_shared) }}
+                </div>
+
+            </div>
+
+            <div class="stat-card info">
+
+                <div class="stat-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+
+                <div class="stat-label">
+                    Individual
+                </div>
+
+                <div class="stat-value currency">
+                    R$ {{ "%.2f"|format(next_month_individual) }}
+                </div>
+
+            </div>
+
+            <div class="stat-card warning">
+
+                <div class="stat-icon">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+
+                <div class="stat-label">
+                    Fixas
+                </div>
+
+                <div class="stat-value currency">
+                    R$ {{ "%.2f"|format(next_month_fixed) }}
+                </div>
+
+            </div>
+
+            <div class="stat-card danger">
+
+                <div class="stat-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+
+                <div class="stat-label">
+                    Parcelamentos
+                </div>
+
+                <div class="stat-value currency">
+                    R$ {{ "%.2f"|format(next_month_installments) }}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>-->
 
 <!-- DIVISAO -->
 {% if member_count > 1 and division %}

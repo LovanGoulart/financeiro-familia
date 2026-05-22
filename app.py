@@ -556,6 +556,33 @@ def dashboard(current_user, family_email, is_admin):
     # junta parcelas + fixas
     next_installments.extend(next_fixed)
 
+        # TOTAL PREVISTO DO PROXIMO MES
+    next_month_total = sum(item['amount'] for item in next_installments)
+
+    next_month_shared = sum(
+        item['amount']
+        for item in next_installments
+        if item['expense_type'] == 'compartilhado'
+    )
+
+    next_month_individual = sum(
+        item['amount']
+        for item in next_installments
+        if item['expense_type'] == 'individual'
+    )
+
+    next_month_fixed = sum(
+        item['amount']
+        for item in next_installments
+        if item['is_recurring']
+    )
+
+    next_month_installments = sum(
+        item['amount']
+        for item in next_installments
+        if item['is_installment']
+    )
+
     # ordena por data
     next_installments = sorted(
         next_installments,
@@ -612,6 +639,11 @@ def dashboard(current_user, family_email, is_admin):
         difference_month=difference_month,
         percent_change=percent_change,
         spent_more=spent_more,
+        next_month_total=next_month_total,
+        next_month_shared=next_month_shared,
+        next_month_individual=next_month_individual,
+        next_month_fixed=next_month_fixed,
+        next_month_installments=next_month_installments,
         person_totals=person_totals,
         division=division,
         next_installments=next_installments,
@@ -621,7 +653,6 @@ def dashboard(current_user, family_email, is_admin):
         shopping_items=[dict(s) for s in shopping_items],
         current_month=current_month,
         current_year=current_year
-        
     )
 
 # ==============================================================================
