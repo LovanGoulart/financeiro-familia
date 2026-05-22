@@ -78,6 +78,50 @@
         </div>
     </div>
 
+    <div class="stat-card dark">
+
+    <div class="stat-icon">
+        <i class="fas fa-calendar"></i>
+    </div>
+
+    <div class="stat-label">
+        Total do Ano
+    </div>
+
+    <div class="stat-value currency">
+        R$ {{ "%.2f"|format(total_year) }}
+    </div>
+
+</div>
+
+<div class="stat-card {% if spent_more %}danger{% else %}success{% endif %}">
+
+    <div class="stat-icon">
+        <i class="fas {% if spent_more %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i>
+    </div>
+
+    <div class="stat-label">
+        Comparativo Mensal
+    </div>
+
+    <div class="stat-value currency">
+        {% if spent_more %}
+            +R$ {{ "%.2f"|format(difference_month) }}
+        {% else %}
+            -R$ {{ "%.2f"|format(difference_month|abs) }}
+        {% endif %}
+    </div>
+
+    <small style="display:block; margin-top:8px; color: var(--gray);">
+        {% if spent_more %}
+            Gastou {{ "%.1f"|format(percent_change) }}% a mais
+        {% else %}
+            Gastou {{ "%.1f"|format(percent_change|abs) }}% a menos
+        {% endif %}
+    </small>
+
+</div>
+
 </div>
 
 <!-- DIVISAO -->

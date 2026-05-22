@@ -454,6 +454,44 @@ def dashboard(current_user, family_email, is_admin):
     fixed_month = month_totals['fixed']
     installments_month = month_totals['installments']
 
+        # TOTAL DO ANO
+    total_year = 0
+
+    for m in range(1, 13):
+        y_totals = get_expense_totals_for_month(
+            conn,
+            member_ids,
+            current_year,
+            m
+        )
+        total_year += y_totals['total']
+
+    # COMPARATIVO COM MES ANTERIOR
+    if current_month == 1:
+        prev_month = 12
+        prev_year = current_year - 1
+    else:
+        prev_month = current_month - 1
+        prev_year = current_year
+
+    prev_totals = get_expense_totals_for_month(
+        conn,
+        member_ids,
+        prev_year,
+        prev_month
+    )
+
+    previous_month_total = prev_totals['total']
+
+    difference_month = total_month - previous_month_total
+
+    if previous_month_total > 0:
+        percent_change = (difference_month / previous_month_total) * 100
+    else:
+        percent_change = 0
+
+    spent_more = difference_month > 0
+
     # TOTAL POR PESSOA
     person_totals = []
     for member in family_members:
@@ -569,6 +607,11 @@ def dashboard(current_user, family_email, is_admin):
         individual_month=individual_month,
         fixed_month=fixed_month,
         installments_month=installments_month,
+        total_year=total_year,
+        previous_month_total=previous_month_total,
+        difference_month=difference_month,
+        percent_change=percent_change,
+        spent_more=spent_more,
         person_totals=person_totals,
         division=division,
         next_installments=next_installments,
@@ -578,6 +621,7 @@ def dashboard(current_user, family_email, is_admin):
         shopping_items=[dict(s) for s in shopping_items],
         current_month=current_month,
         current_year=current_year
+        
     )
 
 # ==============================================================================
