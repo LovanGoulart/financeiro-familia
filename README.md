@@ -24,68 +24,7 @@ Sistema web/mobile responsivo completo para controle financeiro individual, de c
 - Autenticacao segura com hash de senha
 - Modo escuro/claro
 - Interface responsiva mobile-first
-
-## Instalacao Local
-
-```bash
-# 1. Clone ou extraia o projeto
-cd financeiro_familia
-
-# 2. Crie um ambiente virtual (recomendado)
-python -m venv venv
-
-# 3. Ative o ambiente virtual
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
-
-# 4. Instale as dependencias
-pip install -r requirements.txt
-
-# 5. Execute a aplicacao
-python app.py
-```
-
-Acesse: http://localhost:5000
-
-## Deploy
-
-### Render
-1. Crie um novo Web Service
-2. Conecte seu repositorio
-3. Build Command: `pip install -r requirements.txt`
-4. Start Command: `python app.py`
-5. Adicione variavel de ambiente `SECRET_KEY`
-
-### Railway
-1. Crie um novo projeto
-2. Deploy a partir do repositorio
-3. Adicione variavel de ambiente `SECRET_KEY`
-
-### PythonAnywhere
-1. Upload dos arquivos
-2. Crie um virtualenv
-3. Instale dependencias
-4. Configure WSGI apontando para app.py
-
-### VPS Linux
-```bash
-# Instale Python e pip
-sudo apt update && sudo apt install python3 python3-pip
-
-# Clone o projeto
-git clone <repo>
-cd financeiro_familia
-
-# Instale dependencias
-pip3 install -r requirements.txt
-
-# Execute com Gunicorn (producao)
-pip3 install gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
-```
-
+- 
 ## Usuario Padrao
 
 - **Username:** admin
@@ -117,6 +56,3 @@ financeiro_familia/
 |   |-- img/             # Imagens
 ```
 
-## Licenca
-
-MIT License
