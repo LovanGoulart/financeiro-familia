@@ -286,7 +286,7 @@
                             </td>
 
                             <td>
-                                {{ expense.expense_date }}
+                                {{ expense.expense_date[8:10] }}/{{ expense.expense_date[5:7] }}/{{ expense.expense_date[2:4] }}
                             </td>
 
                         </tr>
@@ -373,7 +373,7 @@
                             </td>
 
                             <td>
-                                {{ inst.expense_date }}
+                                {{ inst.expense_date[8:10] }}/{{ inst.expense_date[5:7] }}/{{ inst.expense_date[2:4] }}
                             </td>
 
                         </tr>
