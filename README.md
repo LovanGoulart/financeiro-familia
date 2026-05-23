@@ -24,16 +24,9 @@ Sistema web/mobile responsivo completo para controle financeiro individual, de c
 - Autenticacao segura com hash de senha
 - Modo escuro/claro
 - Interface responsiva mobile-first
-- 
-## Usuario Padrao
-
-- **Username:** admin
-- **Senha:** admin123
-- **Email:** admin@familia.com
-
+ 
 ## Estrutura do Projeto
 
-```
 financeiro_familia/
 |-- app.py                 # Aplicacao principal
 |-- requirements.txt       # Dependencias
@@ -54,5 +47,3 @@ financeiro_familia/
 |   |-- css/             # Estilos
 |   |-- js/              # Scripts
 |   |-- img/             # Imagens
-```
-
