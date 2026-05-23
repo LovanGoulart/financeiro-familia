@@ -28,6 +28,19 @@
                     <label class="form-label">Valor Total (R$) *</label>
                     <input type="number" name="amount" class="form-control" placeholder="0,00" step="0.01" min="0.01"
                            value="{{ "%.2f"|format(expense.amount) if expense else '' }}" required>
+
+                    <!-- CHECKBOX CRÉDITO -->
+                    <label class="form-check" style="cursor: pointer; margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" name="is_credit" id="is_credit" class="form-check-input" 
+                               {% if expense and expense.is_credit %}checked{% endif %}>
+                        <span style="font-size: 0.9em; color: var(--text-secondary);">
+                            <i class="fas fa-credit-card" style="color: #e67e22;"></i> 
+                            Compra no Cartão de Crédito
+                        </span>
+                    </label>
+                    <small id="credit-info" style="display: none; color: #e67e22; font-size: 0.8em; margin-top: 4px;">
+                        <i class="fas fa-info-circle"></i> A data será ajustada automaticamente para o mês seguinte
+                    </small>
                 </div>
             </div>
 
@@ -38,6 +51,7 @@
                 <input
                      type="date"
                      name="expense_date"
+                     id="expense_date"
                      class="form-control"
                      value="{{ expense.expense_date if expense else now.strftime('%Y-%m-%d') }}"
                      required
@@ -137,4 +151,89 @@
         </form>
     </div>
 </div>
+
+<script>
+// ============================================
+// SCRIPT DO CHECKBOX DE CRÉDITO
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    const isCreditCheckbox = document.getElementById('is_credit');
+    const expenseDateInput = document.getElementById('expense_date');
+    const creditInfo = document.getElementById('credit-info');
+
+    // Data original salva para restaurar quando desmarcar
+    let originalDate = expenseDateInput.value;
+
+    isCreditCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            // Mostra a informação
+            creditInfo.style.display = 'block';
+
+            // Calcula o mês seguinte
+            const currentDate = new Date(expenseDateInput.value + 'T00:00:00');
+            let nextYear = currentDate.getFullYear();
+            let nextMonth = currentDate.getMonth() + 2; // +1 porque getMonth é 0-based, +1 para próximo mês
+
+            if (nextMonth > 12) {
+                nextMonth = 1;
+                nextYear += 1;
+            }
+
+            // Formata para YYYY-MM-DD
+            const monthStr = String(nextMonth).padStart(2, '0');
+            const dayStr = String(currentDate.getDate()).padStart(2, '0');
+
+            // Ajusta o dia se exceder o último dia do mês seguinte
+            const lastDayOfNextMonth = new Date(nextYear, nextMonth, 0).getDate();
+            const finalDay = Math.min(currentDate.getDate(), lastDayOfNextMonth);
+            const finalDayStr = String(finalDay).padStart(2, '0');
+
+            const nextMonthDate = `${nextYear}-${monthStr}-${finalDayStr}`;
+            expenseDateInput.value = nextMonthDate;
+
+            // Destaca visualmente a mudança
+            expenseDateInput.style.borderColor = '#e67e22';
+            expenseDateInput.style.backgroundColor = '#fff8f0';
+
+        } else {
+            // Esconde a informação
+            creditInfo.style.display = 'none';
+
+            // Restaura a data original
+            expenseDateInput.value = originalDate;
+
+            // Remove o destaque
+            expenseDateInput.style.borderColor = '';
+            expenseDateInput.style.backgroundColor = '';
+        }
+    });
+
+    // Atualiza a data original se o usuário mudar manualmente
+    expenseDateInput.addEventListener('change', function() {
+        if (!isCreditCheckbox.checked) {
+            originalDate = this.value;
+        }
+    });
+});
+
+// Script existente para recorrente/parcelado
+const isRecurring = document.getElementById('is_recurring');
+const recurringFields = document.getElementById('recurring-fields');
+const isInstallment = document.getElementById('is_installment');
+const installmentFields = document.getElementById('installment-fields');
+
+if (isRecurring) {
+    isRecurring.addEventListener('change', function() {
+        recurringFields.style.display = this.checked ? 'block' : 'none';
+    });
+    if (isRecurring.checked) recurringFields.style.display = 'block';
+}
+
+if (isInstallment) {
+    isInstallment.addEventListener('change', function() {
+        installmentFields.style.display = this.checked ? 'block' : 'none';
+    });
+    if (isInstallment.checked) installmentFields.style.display = 'block';
+}
+</script>
 {% endblock %}
