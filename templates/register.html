@@ -9,26 +9,39 @@
             <div class="login-logo">
                 <i class="fas fa-users"></i>
             </div>
-            <h1 class="login-title">Cadastrar Familia</h1>
+            <h1 class="login-title">Cadastrar Família</h1>
             <p class="login-subtitle">Crie sua conta familiar</p>
 
             <form method="POST" action="{{ url_for('register') }}">
                 <div class="form-group">
-                    <label class="form-label">Email da Familia</label>
+                    <label class="form-label">Email da Família</label>
                     <div style="position: relative;">
                         <i class="fas fa-envelope" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gray);"></i>
                         <input type="email" name="family_email" class="form-control" placeholder="ex: familia@gmail.com" required style="padding-left: 42px;">
                     </div>
                     <small style="color: var(--gray); font-size: 0.8rem; margin-top: 5px; display: block;">
-                        <i class="fas fa-info-circle"></i> Todos os usuarios da familia usam o mesmo email
+                        <i class="fas fa-info-circle"></i> Todos os usuários da família usam o mesmo email
                     </small>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Quantidade de Usuarios</label>
+                    <label class="form-label">Quantidade de Usuários</label>
                     <div style="position: relative;">
-                        <i class="fas fa-users" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gray);"></i>
-                        <input type="number" name="user_count" id="user_count" class="form-control" value="1" min="1" max="10" required style="padding-left: 42px;">
+                            <i class="fas fa-users" 
+                         style="position: absolute;
+                                 left: 14px; top: 50%;
+                                  transform: translateY(-50%);
+                                   color: var(--gray);">
+                            </i>
+                        <input type="number" 
+                                name="user_count" 
+                                id="user_count" 
+                                class="form-control" 
+                                value="1" 
+                                min="1" 
+                                max="10" 
+                                required style="padding-left: 42px;"
+                        >
                     </div>
                 </div>
 
@@ -37,12 +50,12 @@
 
                 <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; margin-top: 20px;">
                     <i class="fas fa-user-plus"></i>
-                    Cadastrar Familia
+                    Cadastrar Família
                 </button>
             </form>
 
             <div class="login-link">
-                <p>Ja tem conta? <a href="{{ url_for('login') }}">Faca login</a></p>
+                <p>Já tem conta? <a href="{{ url_for('login') }}">Faça login</a></p>
             </div>
         </div>
     </div>

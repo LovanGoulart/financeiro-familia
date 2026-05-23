@@ -19,13 +19,13 @@
 
             <div class="grid-2">
                 <div class="form-group">
-                    <label class="form-label">Descricao *</label>
+                    <label class="form-label">Descrição *</label>
                     <input type="text" name="description" class="form-control" placeholder="Ex: Supermercado" 
                            value="{{ expense.description if expense else '' }}" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Valor (R$) *</label>
+                    <label class="form-label">Valor Total (R$) *</label>
                     <input type="number" name="amount" class="form-control" placeholder="0,00" step="0.01" min="0.01"
                            value="{{ "%.2f"|format(expense.amount) if expense else '' }}" required>
                 </div>
@@ -33,14 +33,15 @@
 
             <div class="grid-2">
                 <div class="form-group">
-                    <label class="form-label">Data *</label>
+                   <label class="form-label">Data *</label>
 
                 <input
                      type="date"
                      name="expense_date"
                      class="form-control"
                      value="{{ expense.expense_date if expense else now.strftime('%Y-%m-%d') }}"
-                     required>
+                     required
+                >
                 </div>
                 <div class="form-group">
                     <label class="form-label">Categoria</label>
@@ -57,7 +58,7 @@
 
             <div class="grid-2">
                 <div class="form-group">
-                    <label class="form-label">Responsavel *</label>
+                    <label class="form-label">Responsável *</label>
                     <select name="person_id" class="form-control" required>
                         {% for member in family_members %}
                         <option value="{{ member.id }}" 
@@ -78,8 +79,8 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Observacoes</label>
-                <textarea name="notes" class="form-control" placeholder="Observacoes adicionais...">{{ expense.notes if expense else '' }}</textarea>
+                <label class="form-label">Observações</label>
+                <textarea name="notes" class="form-control" placeholder="Observações adicionais...">{{ expense.notes if expense else '' }}</textarea>
             </div>
 
             <!-- Recurring Expense -->
@@ -92,7 +93,7 @@
             </div>
 
             <div id="recurring-fields" class="form-group" style="display: none; background: var(--bg-primary); padding: 15px; border-radius: 10px;">
-                <label class="form-label">Frequencia</label>
+                <label class="form-label">Frequência</label>
                 <select name="recurring_frequency" class="form-control">
                     <option value="mensal" {% if expense and expense.recurring_frequency == 'mensal' %}selected{% endif %}>Mensal</option>
                     <option value="semanal" {% if expense and expense.recurring_frequency == 'semanal' %}selected{% endif %}>Semanal</option>

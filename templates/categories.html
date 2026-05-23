@@ -17,25 +17,25 @@
             </div>
             <div class="form-group" style="flex: 1; min-width: 220px; margin-bottom: 0;">
 
-    <label class="form-label">Icone</label>
+    <label class="form-label">Ícone</label>
 
     <select name="icon" class="form-control">
 
         <option value="tag">🏷️ Tag</option>
         <option value="shopping-cart">🛒 Compras</option>
-        <option value="utensils">🍔 Alimentacao</option>
+        <option value="utensils">🍔 Alimentação</option>
         <option value="car">🚗 Transporte</option>
         <option value="house">🏠 Casa</option>
         <option value="bolt">⚡ Energia</option>
         <option value="wifi">📶 Internet</option>
-        <option value="heart">❤️ Saude</option>
+        <option value="heart">❤️ Saúde</option>
         <option value="film">🎬 Lazer</option>
         <option value="gift">🎁 Presentes</option>
-        <option value="credit-card">💳 Cartao</option>
+        <option value="credit-card">💳 Cartão</option>
         <option value="money-bill-wave">💵 Dinheiro</option>
         <option value="piggy-bank">🐷 Economia</option>
         <option value="dog">🐶 Pets</option>
-        <option value="music">🎵 Musica</option>
+        <option value="music">🎵 Música</option>
         <option value="plane">✈️ Viagem</option>
         <option value="shirt">👕 Roupas</option>
         <option value="gamepad">🎮 Games</option>
@@ -61,7 +61,17 @@
     {% for category in categories %}
     <div class="card animate-slide-up">
         <div class="card-body" style="display: flex; align-items: center; gap: 15px;">
-            <div style="width: 50px; height: 50px; border-radius: 12px; background: {{ category.color }}20; color: {{ category.color }}; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+            <div 
+            style="width: 50px;
+             height: 50px;
+              border-radius: 12px;
+               background: {{ category.color }}20;
+                color: {{ category.color }};
+                 display: flex;
+                  align-items: center;
+                   justify-content: center;
+                    font-size: 1.5rem;
+                     flex-shrink: 0;">
                 <i class="fas fa-{{ category.icon }}"></i>
             </div>
             <div style="flex: 1;">
@@ -69,13 +79,22 @@
                 <span style="font-size: 0.8rem; color: var(--gray);">ID: {{ category.id }}</span>
             </div>
             <div style="display: flex; gap: 5px;">
-                <button type="button" class="btn btn-sm btn-icon" style="background: var(--info); color: white;" onclick="editCategory({{ category.id }}, '{{ category.name }}', '{{ category.icon }}', '{{ category.color }}')" title="Editar">
-                    <i class="fas fa-edit"></i>
+                <button type="button" 
+                        class="btn btn-sm btn-icon" 
+                        style="background: var(--info); color: white;" 
+                        onclick="editCategory({{ category.id }}, '{{ category.name }}', '{{ category.icon }}', '{{ category.color }}')" 
+                        title="Editar">
+                            <i class="fas fa-edit"></i>
                 </button>
-                <form method="POST" action="{{ url_for('delete_category', id=category.id) }}" data-confirm="Tem certeza que deseja excluir esta categoria?" style="display: inline;">
-                    <button type="submit" class="btn btn-sm btn-icon" style="background: var(--danger); color: white;" title="Excluir">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <form method="POST" 
+                        action="{{ url_for('delete_category', id=category.id) }}" 
+                        data-confirm="Tem certeza que deseja excluir esta categoria?" 
+                        style="display: inline;">
+                <button type="submit" class="btn btn-sm btn-icon" 
+                        style="background: var(--danger); color: white;" 
+                        title="Excluir">
+                            <i class="fas fa-trash"></i>
+                </button>
                 </form>
             </div>
         </div>
@@ -89,8 +108,23 @@
 </div>
 
 <!-- Edit Modal -->
-<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-    <div style="background: var(--bg-card); border-radius: 16px; padding: 30px; width: 90%; max-width: 450px; box-shadow: var(--shadow-lg);">
+<div id="editModal" 
+     style="display: none;
+             position: fixed;
+               top: 0;
+                left: 0;
+                 width: 100%;
+                  height: 100%;
+                   background: rgba(0,0,0,0.5);
+                    z-index: 2000;
+                     align-items: center;
+                      justify-content: center;">
+    <div style="background: var(--bg-card);
+                  border-radius: 16px;
+                   padding: 30px;
+                    width: 90%;
+                     max-width: 450px;
+                      box-shadow: var(--shadow-lg);">
         <h3 style="margin-bottom: 20px; font-size: 1.2rem;"><i class="fas fa-edit"></i> Editar Categoria</h3>
         <form id="editForm" method="POST" action="">
             <div class="form-group">
@@ -98,7 +132,7 @@
                 <input type="text" name="name" id="editName" class="form-control" required>
             </div>
             <div class="form-group">
-                <label class="form-label">Icone</label>
+                <label class="form-label">Ícone</label>
                 <input type="text" name="icon" id="editIcon" class="form-control">
             </div>
             <div class="form-group">

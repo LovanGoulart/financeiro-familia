@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Gerenciar Usuarios - Financeiro Familiar{% endblock %}
-{% block page_title %}Gerenciamento de Usuarios{% endblock %}
+{% block title %}Gerenciar Usuários - Financeiro Familiar{% endblock %}
+{% block page_title %}Gerenciamento de Usuários{% endblock %}
 
 {% block content %}
 <!-- Add User -->
 <div class="card" style="margin-bottom: 25px;">
     <div class="card-header">
-        <span class="card-title"><i class="fas fa-user-plus"></i> Adicionar Usuario</span>
+        <span class="card-title"><i class="fas fa-user-plus"></i> Adicionar Usuário</span>
     </div>
     <div class="card-body">
         <form method="POST" action="{{ url_for('admin_add_user') }}" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: end;">
@@ -33,17 +33,17 @@
 <!-- Users Table -->
 <div class="card">
     <div class="card-header">
-        <span class="card-title"><i class="fas fa-users"></i> Membros da Familia</span>
+        <span class="card-title"><i class="fas fa-users"></i> Membros da Família</span>
     </div>
     <div class="card-body" style="padding: 0;">
         <div class="table-container">
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Usuario</th>
+                        <th>Usuário</th>
                         <th>Nome</th>
                         <th>Papel</th>
-                        <th>Acoes</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -58,13 +58,15 @@
                         </td>
                         <td>
                             {% if member.id != current_user.id %}
-                            <form method="POST" action="{{ url_for('admin_delete_user', id=member.id) }}" data-confirm="Tem certeza que deseja remover {{ member.name }}? Todas as despesas serao transferidas para voce." style="display: inline;">
+                            <form method="POST" action="{{ url_for('admin_delete_user', id=member.id) }}" 
+                                   data-confirm="Tem certeza que deseja remover {{ member.name }}? Todas as despesas serão transferidas para você." 
+                                    style="display: inline;">
                                 <button type="submit" class="btn btn-sm btn-icon" style="background: var(--danger); color: white;" title="Remover">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
                             {% else %}
-                            <span style="color: var(--gray); font-size: 0.85rem;">Voce</span>
+                            <span style="color: var(--gray); font-size: 0.85rem;">Você</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -78,7 +80,7 @@
 <div style="margin-top: 20px; padding: 15px; background: var(--bg-primary); border-radius: 10px; border-left: 4px solid var(--info);">
     <p style="font-size: 0.9rem; color: var(--text-secondary);">
         <i class="fas fa-info-circle" style="color: var(--info);"></i>
-        <strong>Dica:</strong> Ao remover um usuario, todas as suas despesas e itens de compra serao transferidos para voce (administrador).
+        <strong>Dica:</strong> Ao remover um usuário, todas as suas despesas e itens de compra serão transferidos para você (administrador).
     </p>
 </div>
 {% endblock %}

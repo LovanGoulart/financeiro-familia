@@ -65,14 +65,14 @@
                 <li>
                     <a href="{{ url_for('reports') }}" class="{% if request.endpoint in ['reports'] %}active{% endif %}">
                         <i class="fas fa-file-alt"></i>
-                        <span>Relatorios</span>
+                        <span>Relatórios</span>
                     </a>
                 </li>
                 {% if is_admin %}
                 <li>
                     <a href="{{ url_for('admin_users') }}" class="{% if request.endpoint in ['admin_users'] %}active{% endif %}">
                         <i class="fas fa-users-cog"></i>
-                        <span>Usuarios</span>
+                        <span>Usuários</span>
                     </a>
                 </li>
                 {% endif %}
@@ -137,5 +137,57 @@
     <!-- JavaScript Principal -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block extra_js %}{% endblock %}
+
+<!-- Botão Voltar ao Topo -->
+<button id="backToTop" title="Voltar ao topo">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+<style>
+#backToTop {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 50px;
+    height: 50px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    z-index: 9999;
+    transition: all 0.3s ease;
+}
+
+#backToTop:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 12px 25px rgba(99, 102, 241, 0.4);
+}
+</style>
+
+<script>
+const backToTopBtn = document.getElementById('backToTop');
+
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 300) {
+        backToTopBtn.style.display = 'flex';
+    } else {
+        backToTopBtn.style.display = 'none';
+    }
+});
+
+backToTopBtn.addEventListener('click', () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+});
+</script>
+
 </body>
 </html>

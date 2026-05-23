@@ -14,7 +14,7 @@
         </div>
 
         <div class="stat-label">
-            Total do Mes
+            Total do Mês
         </div>
 
         <div class="stat-value currency">
@@ -249,7 +249,7 @@
     <div class="card-header">
         <span class="card-title">
             <i class="fas fa-balance-scale"></i>
-            Divisao de Gastos Compartilhados
+            Divisão de Gastos Compartilhados
         </span>
     </div>
 
@@ -339,7 +339,7 @@
         <div class="card-header">
             <span class="card-title">
                 <i class="fas fa-chart-line"></i>
-                Evolucao Mensal
+                Evolução Mensal
             </span>
         </div>
 
@@ -369,7 +369,7 @@
 
             <span class="card-title">
                 <i class="fas fa-history"></i>
-                Ultimas Movimentacoes
+                Últimas Movimentações
             </span>
 
             <a href="{{ url_for('expenses') }}" class="btn btn-sm btn-primary">
@@ -386,7 +386,7 @@
 
                     <thead>
                         <tr>
-                            <th>Descricao</th>
+                            <th>Descrição</th>
                             <th>Pessoa</th>
                             <th>Valor</th>
                             <th>Data</th>
@@ -405,11 +405,11 @@
 
                                     {% if expense.category_color %}
                                     <span style="
-                                        width: 10px;
-                                        height: 10px;
-                                        border-radius: 50%;
-                                        background-color: {{ expense.category_color or '#6c757d' }};
-                                        display:inline-block;"></span>
+                                            width: 10px;
+                                             height: 10px;
+                                              border-radius: 50%;
+                                               background-color: {{ expense.category_color or '#6c757d' }};
+                                                display:inline-block;"></span>
                                     {% endif %}
 
                                     <div>
@@ -461,7 +461,7 @@
 
                                 <i class="fas fa-inbox" style="font-size:2rem; margin-bottom:10px; display:block;"></i>
 
-                                Nenhuma movimentacao encontrada
+                                Nenhuma movimentação encontrada
 
                             </td>
 
@@ -486,7 +486,7 @@
 
             <span class="card-title">
                 <i class="fas fa-calendar-alt"></i>
-                Proximas Parcelas
+                Próximas Parcelas
             </span>
 
         </div>
@@ -499,7 +499,7 @@
 
                     <thead>
                         <tr>
-                            <th>Descricao</th>
+                            <th>Descrição</th>
                             <th>Parcela</th>
                             <th>Valor</th>
                             <th>Data</th>
@@ -592,10 +592,9 @@
 
             <input
                 type="checkbox"
-                class="shopping-checkbox"
-                data-id="{{ item.id }}"
-                {% if item.is_bought %}checked{% endif %}
-            >
+                 class="shopping-checkbox"
+                  data-id="{{ item.id }}"
+                   {% if item.is_bought %}checked{% endif %}>
 
             <div class="shopping-info">
 

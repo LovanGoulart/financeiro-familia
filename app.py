@@ -42,7 +42,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            flash('Por favor, faca login para acessar esta pagina.', 'warning')
+            flash('Por favor, faça login para acessar esta página.', 'warning')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -60,7 +60,7 @@ def family_context(f):
 
         if not user:
             session.clear()
-            flash('Usuario nao encontrado.', 'danger')
+            flash('Usuário não encontrado.', 'danger')
             return redirect(url_for('login'))
 
         kwargs['current_user'] = dict(user)
@@ -341,7 +341,7 @@ def login():
             flash('Bem-vindo, {}!'.format(user['name']), 'success')
             return redirect(url_for('dashboard'))
         else:
-            flash('Usuario ou senha incorretos.', 'danger')
+            flash('Usuário ou senha incorretos.', 'danger')
 
     return render_template('login.html')
 
@@ -356,7 +356,7 @@ def register():
         user_count = int(request.form.get('user_count', 1))
 
         if not family_email or user_count < 1 or user_count > 10:
-            flash('Dados invalidos.', 'danger')
+            flash('Dados inválidos.', 'danger')
             return render_template('register.html')
 
         conn = get_db_connection(app.config['DATABASE'])
@@ -364,7 +364,7 @@ def register():
 
         if existing:
             conn.close()
-            flash('Este email ja esta cadastrado. Faca login ou use outro email.', 'warning')
+            flash('Este email já está cadastrado. Faça login ou use outro email.', 'warning')
             return render_template('register.html')
 
         created_users = []
@@ -375,18 +375,18 @@ def register():
 
             if not name or not username or not password:
                 conn.close()
-                flash('Preencha todos os dados do Usuario {}.'.format(i), 'warning')
+                flash('Preencha todos os dados do Usuário {}.'.format(i), 'warning')
                 return render_template('register.html')
 
             if len(password) < 6:
                 conn.close()
-                flash('Senha do Usuario {} deve ter no minimo 6 caracteres.'.format(i), 'warning')
+                flash('Senha do Usuário {} deve ter no minimo 6 caracteres.'.format(i), 'warning')
                 return render_template('register.html')
 
             existing_user = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
             if existing_user:
                 conn.close()
-                flash('Username "{}" ja esta em uso. Escolha outro.'.format(username), 'warning')
+                flash('Username "{}" já está em uso. Escolha outro.'.format(username), 'warning')
                 return render_template('register.html')
 
             role = 'admin' if i == 1 else 'user'
@@ -399,7 +399,7 @@ def register():
         conn.commit()
         conn.close()
 
-        flash('Familia cadastrada com sucesso! Usuarios criados: {}'.format(', '.join(created_users)), 'success')
+        flash('Família cadastrada com sucesso! Usuários criados: {}'.format(', '.join(created_users)), 'success')
         return redirect(url_for('login'))
 
     return render_template('register.html')
@@ -408,7 +408,7 @@ def register():
 def logout():
     """Realiza logout do usuario."""
     session.clear()
-    flash('Voce saiu do sistema.', 'info')
+    flash('Você saiu do sistema.', 'info')
     return redirect(url_for('login'))
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
@@ -422,9 +422,9 @@ def forgot_password():
         conn.close()
 
         if user:
-            flash('Usuario encontrado: {} (Email: {}). Entre em contato com o administrador da familia para redefinir a senha.'.format(user['name'], user['email']), 'info')
+            flash('Usuário encontrado: {} (Email: {}). Entre em contato com o administrador da família para redefinir a senha.'.format(user['name'], user['email']), 'info')
         else:
-            flash('Usuario nao encontrado.', 'danger')
+            flash('Usuário não encontrado.', 'danger')
 
     return render_template('forgot_password.html')
 
@@ -750,42 +750,74 @@ def expenses(current_user, family_email, is_admin):
 @family_context
 def add_expense(current_user, family_email, is_admin):
     """Adiciona nova despesa."""
+    
     conn = get_db_connection(app.config['DATABASE'])
 
     if request.method == 'POST':
+
         description = request.form.get('description', '').strip()
-        amount = float(request.form.get('amount', 0))
+
+        # VALOR TOTAL INFORMADO PELO USUARIO
+        total_amount = float(
+            request.form.get('amount', 0)
+        )
+
         expense_date = request.form.get(
             'expense_date',
             datetime.now().strftime('%Y-%m-%d')
         )
+
         category_id = request.form.get('category_id')
-        person_id = int(request.form.get('person_id', current_user['id']))
-        expense_type = request.form.get('expense_type', 'individual')
+
+        person_id = int(
+            request.form.get('person_id', current_user['id'])
+        )
+
+        expense_type = request.form.get(
+            'expense_type',
+            'individual'
+        )
+
         notes = request.form.get('notes', '').strip()
 
-        is_recurring = 1 if request.form.get('is_recurring') else 0
+        # RECORRENTE
+        is_recurring = 1 if request.form.get(
+            'is_recurring'
+        ) else 0
+
         recurring_frequency = request.form.get(
             'recurring_frequency',
             'mensal'
         )
 
-        is_installment = 1 if request.form.get('is_installment') else 0
+        # PARCELAMENTO
+        is_installment = 1 if request.form.get(
+            'is_installment'
+        ) else 0
+
         installment_total = int(
-            request.form.get('installment_total', 1)
-        )
-        installment_number = int(
-            request.form.get('installment_number', 1)
+            request.form.get(
+                'installment_total',
+                1
+            )
         )
 
-        if not description or amount <= 0:
-            flash('Preencha descricao e valor validos.', 'warning')
+        installment_number = 1
+
+        if not description or total_amount <= 0:
+
+            flash(
+                'Preencha descrição e valor válidos.',
+                'warning'
+            )
 
             categories = conn.execute(
                 'SELECT * FROM categories ORDER BY name'
             ).fetchall()
 
-            family_members = get_family_members(family_email)
+            family_members = get_family_members(
+                family_email
+            )
 
             conn.close()
 
@@ -800,7 +832,9 @@ def add_expense(current_user, family_email, is_admin):
                 now=datetime.now()
             )
 
-        member_ids = get_family_member_ids(family_email)
+        member_ids = get_family_member_ids(
+            family_email
+        )
 
         if person_id not in member_ids:
             conn.close()
@@ -808,11 +842,24 @@ def add_expense(current_user, family_email, is_admin):
 
         installment_group_id = None
 
-        if is_installment:
+        # =========================
+        # DIVISAO DAS PARCELAS
+        # =========================
+        if is_installment and installment_total > 1:
+
             installment_group_id = "inst_{}_{}".format(
                 datetime.now().strftime('%Y%m%d%H%M%S'),
                 person_id
             )
+
+            # divide o valor total
+            amount = round(
+                total_amount / installment_total,
+                2
+            )
+
+        else:
+            amount = total_amount
 
         sql = """
             INSERT INTO expenses 
@@ -836,28 +883,34 @@ def add_expense(current_user, family_email, is_admin):
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
-        conn.execute(sql, (
-            description,
-            amount,
-            expense_date,
-            category_id,
-            person_id,
-            expense_type,
-            is_recurring,
-            recurring_frequency,
-            None,
-            is_installment,
-            installment_total,
-            installment_number,
-            installment_group_id,
-            notes,
-            current_user['id']
-        ))
+        conn.execute(
+            sql,
+            (
+                description,
+                amount,
+                expense_date,
+                category_id,
+                person_id,
+                expense_type,
+                is_recurring,
+                recurring_frequency,
+                None,
+                is_installment,
+                installment_total,
+                installment_number,
+                installment_group_id,
+                notes,
+                current_user['id']
+            )
+        )
 
         conn.commit()
         conn.close()
 
-        flash('Despesa adicionada com sucesso!', 'success')
+        flash(
+            'Despesa adicionada com sucesso!',
+            'success'
+        )
 
         return redirect(url_for('expenses'))
 
@@ -865,7 +918,9 @@ def add_expense(current_user, family_email, is_admin):
         'SELECT * FROM categories ORDER BY name'
     ).fetchall()
 
-    family_members = get_family_members(family_email)
+    family_members = get_family_members(
+        family_email
+    )
 
     conn.close()
 
@@ -899,7 +954,7 @@ def edit_expense(current_user, family_email, is_admin, id):
 
     if not is_admin and expense['created_by'] != current_user['id']:
         conn.close()
-        flash('Voce so pode editar suas proprias movimentacoes.', 'danger')
+        flash('Você só pode editar suas próprias movimentações.', 'danger')
         return redirect(url_for('expenses'))
 
     if request.method == 'POST':
@@ -917,7 +972,7 @@ def edit_expense(current_user, family_email, is_admin, id):
         installment_number = int(request.form.get('installment_number', 1))
 
         if not description or amount <= 0:
-            flash('Preencha descricao e valor validos.', 'warning')
+            flash('Preencha descrição e valor válidos.', 'warning')
             categories = conn.execute('SELECT * FROM categories ORDER BY name').fetchall()
             family_members = get_family_members(family_email)
             conn.close()
@@ -970,13 +1025,13 @@ def delete_expense(current_user, family_email, is_admin, id):
 
     if not is_admin and expense['created_by'] != current_user['id']:
         conn.close()
-        flash('Voce so pode excluir suas proprias movimentacoes.', 'danger')
+        flash('Voçe só pode excluir suas próprias movimentações.', 'danger')
         return redirect(url_for('expenses'))
 
     conn.execute('DELETE FROM expenses WHERE id = ?', (id,))
     conn.commit()
     conn.close()
-    flash('Despesa excluida com sucesso!', 'success')
+    flash('Despesa excluída com sucesso!', 'success')
     return redirect(url_for('expenses'))
 
 # ==============================================================================
@@ -1007,7 +1062,7 @@ def add_category(current_user, family_email, is_admin):
     color = request.form.get('color', '#6c757d').strip()
 
     if not name:
-        flash('Nome da categoria e obrigatorio.', 'warning')
+        flash('Nome da categoria é obrigatorio.', 'warning')
         return redirect(url_for('categories'))
 
     conn = get_db_connection(app.config['DATABASE'])
@@ -1028,7 +1083,7 @@ def edit_category(current_user, family_email, is_admin, id):
     color = request.form.get('color', '#6c757d').strip()
 
     if not name:
-        flash('Nome da categoria e obrigatorio.', 'warning')
+        flash('Nome da categoria é obrigatório.', 'warning')
         return redirect(url_for('categories'))
 
     conn = get_db_connection(app.config['DATABASE'])
@@ -1049,14 +1104,14 @@ def delete_category(current_user, family_email, is_admin, id):
 
     if expenses_using > 0:
         conn.close()
-        flash('Nao e possivel excluir categoria em uso.', 'warning')
+        flash('Não é possível excluir categoria em uso.', 'warning')
         return redirect(url_for('categories'))
 
     conn.execute('DELETE FROM categories WHERE id = ?', (id,))
     conn.commit()
     conn.close()
 
-    flash('Categoria excluida com sucesso!', 'success')
+    flash('Categoria excluída com sucesso!', 'success')
     return redirect(url_for('categories'))
 
 # ==============================================================================
@@ -1094,7 +1149,7 @@ def add_shopping_item(current_user, family_email, is_admin):
     notes = request.form.get('notes', '').strip()
 
     if not name:
-        flash('Nome do item e obrigatorio.', 'warning')
+        flash('Nome do item é obrigatório.', 'warning')
         return redirect(url_for('shopping'))
 
     conn = get_db_connection(app.config['DATABASE'])
@@ -1103,7 +1158,7 @@ def add_shopping_item(current_user, family_email, is_admin):
     conn.commit()
     conn.close()
 
-    flash('Item adicionado a lista!', 'success')
+    flash('Item adicionado à lista!', 'success')
     return redirect(url_for('shopping'))
 
 @app.route('/shopping/toggle/<int:id>', methods=['POST'])
@@ -1272,7 +1327,7 @@ def admin_add_user(current_user, family_email, is_admin):
     conn.commit()
     conn.close()
 
-    flash('Usuario {} adicionado com sucesso!'.format(name), 'success')
+    flash('Usuário {} adicionado com sucesso!'.format(name), 'success')
     return redirect(url_for('admin_users'))
 
 @app.route('/admin/users/delete/<int:id>', methods=['POST'])
@@ -1282,14 +1337,14 @@ def admin_add_user(current_user, family_email, is_admin):
 def admin_delete_user(current_user, family_email, is_admin, id):
     """Admin remove usuario da familia."""
     if id == current_user['id']:
-        flash('Voce nao pode remover a si mesmo.', 'warning')
+        flash('Voçe nao pode remover a si mesmo.', 'warning')
         return redirect(url_for('admin_users'))
 
     conn = get_db_connection(app.config['DATABASE'])
     user = conn.execute('SELECT * FROM users WHERE id = ? AND email = ?', (id, family_email)).fetchone()
     if not user:
         conn.close()
-        flash('Usuario nao encontrado.', 'danger')
+        flash('Usuário não encontrado.', 'danger')
         return redirect(url_for('admin_users'))
 
     conn.execute('UPDATE expenses SET person_id = ?, created_by = ? WHERE person_id = ?', (current_user['id'], current_user['id'], id))
@@ -1298,7 +1353,7 @@ def admin_delete_user(current_user, family_email, is_admin, id):
     conn.commit()
     conn.close()
 
-    flash('Usuario removido com sucesso.', 'success')
+    flash('Usuário removido com sucesso.', 'success')
     return redirect(url_for('admin_users'))
 
 # ==============================================================================
