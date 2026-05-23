@@ -34,6 +34,41 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 init_db(app.config['DATABASE'])
 
 # ==============================================================================
+# FUNCOES AUXILIARES DE FORMATACAO
+# ==============================================================================
+
+def format_date_br(date_obj):
+    """Formata um objeto datetime/date para dd/mm/aaaa."""
+    if isinstance(date_obj, str):
+        # Se for string no formato do banco (YYYY-MM-DD), converte primeiro
+        try:
+            date_obj = datetime.strptime(date_obj, '%Y-%m-%d')
+        except ValueError:
+            return date_obj
+    if date_obj:
+        return date_obj.strftime('%d/%m/%Y')
+    return ''
+
+def format_month_br(year, month):
+    """Formata mes/ano para exibicao em portugues."""
+    meses = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+    return "{} / {}".format(meses[month], year)
+
+def format_month_short_br(year, month):
+    """Formata mes/ano abreviado."""
+    meses_abr = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+                 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+    return "{}/{}".format(meses_abr[month], year)
+
+def parse_date_br(date_str):
+    """Converte string dd/mm/aaaa para objeto datetime."""
+    try:
+        return datetime.strptime(date_str, '%d/%m/%Y')
+    except ValueError:
+        return None
+
+# ==============================================================================
 # DECORADORES DE AUTENTICACAO E AUTORIZACAO
 # ==============================================================================
 
@@ -173,6 +208,7 @@ def generate_recurring_expenses(conn, member_ids, target_year, target_month):
                 'description': exp['description'],
                 'amount': exp['amount'],
                 'expense_date': adjusted_date,
+                'expense_date_br': format_date_br(adjusted_date),
                 'category_id': exp['category_id'],
                 'person_id': exp['person_id'],
                 'person_name': exp['person_name'],
@@ -230,6 +266,7 @@ def generate_installment_expenses(conn, member_ids, target_year, target_month):
                     'description': "{} ({}/{})".format(exp['description'], i+1, total_installments),
                     'amount': exp['amount'],
                     'expense_date': adjusted_date,
+                    'expense_date_br': format_date_br(adjusted_date),
                     'category_id': exp['category_id'],
                     'person_id': exp['person_id'],
                     'person_name': exp['person_name'],
@@ -269,6 +306,7 @@ def get_all_expenses_for_month(conn, member_ids, year, month, include_regular=Tr
         for r in regular:
             item = dict(r)
             item['is_generated'] = False
+            item['expense_date_br'] = format_date_br(item['expense_date'])
             all_expenses.append(item)
 
     # 2. Despesas recorrentes materializadas
@@ -302,6 +340,28 @@ def get_expense_totals_for_month(conn, member_ids, year, month):
         'installments': installments,
         'expenses': expenses
     }
+
+# ==============================================================================
+# FILTROS JINJA PARA FORMATACAO DE DATAS
+# ==============================================================================
+
+@app.template_filter('date_br')
+def date_br_filter(value):
+    """Filtro Jinja2 para formatar datas no padrao brasileiro."""
+    return format_date_br(value)
+
+@app.template_filter('month_br')
+def month_br_filter(value):
+    """Filtro Jinja2 para formatar mes/ano no padrao brasileiro."""
+    if isinstance(value, str) and '/' in value:
+        parts = value.split('/')
+        if len(parts) == 2:
+            meses_abr = {'Jan': 'Jan', 'Feb': 'Fev', 'Mar': 'Mar', 'Apr': 'Abr',
+                        'May': 'Mai', 'Jun': 'Jun', 'Jul': 'Jul', 'Aug': 'Ago',
+                        'Sep': 'Set', 'Oct': 'Out', 'Nov': 'Nov', 'Dec': 'Dez'}
+            mes = meses_abr.get(parts[0], parts[0])
+            return "{}/{}".format(mes, parts[1])
+    return value
 
 # ==============================================================================
 # ROTAS DE AUTENTICACAO
@@ -474,6 +534,7 @@ def forgot_password():
         category=category,
         new_password=new_password
     )
+
 # ==============================================================================
 # ROTAS DO DASHBOARD
 # ==============================================================================
@@ -640,7 +701,13 @@ def dashboard(current_user, family_email, is_admin):
 
     # ULTIMAS MOVIMENTACOES (apenas despesas reais, nao geradas)
     query = "SELECT e.*, u.name as person_name, c.name as category_name, c.color as category_color FROM expenses e JOIN users u ON e.person_id = u.id LEFT JOIN categories c ON e.category_id = c.id WHERE e.person_id IN ({}) ORDER BY e.created_at DESC LIMIT 10".format(','.join('?' * len(member_ids)))
-    recent_expenses = conn.execute(query, tuple(member_ids)).fetchall()
+    recent_expenses_raw = conn.execute(query, tuple(member_ids)).fetchall()
+    recent_expenses = []
+    for e in recent_expenses_raw:
+        item = dict(e)
+        item['expense_date_br'] = format_date_br(item['expense_date'])
+        item['created_at_br'] = format_date_br(item['created_at'])
+        recent_expenses.append(item)
 
     # DADOS PARA GRAFICOS - CATEGORIAS
     category_totals = {}
@@ -662,7 +729,10 @@ def dashboard(current_user, family_email, is_admin):
         m_month = month_date.month
 
         m_totals = get_expense_totals_for_month(conn, member_ids, m_year, m_month)
-        monthly_data.append({'month': month_date.strftime('%b/%Y'), 'total': m_totals['total']})
+        monthly_data.append({
+            'month': format_month_short_br(m_year, m_month),
+            'total': m_totals['total']
+        })
 
     # LISTA DE COMPRAS
     query = "SELECT s.*, c.name as category_name, c.color as category_color FROM shopping_list s LEFT JOIN categories c ON s.category_id = c.id WHERE s.created_by IN ({}) ORDER BY s.is_bought, s.created_at DESC".format(','.join('?' * len(member_ids)))
@@ -693,12 +763,13 @@ def dashboard(current_user, family_email, is_admin):
         person_totals=person_totals,
         division=division,
         next_installments=next_installments,
-        recent_expenses=[dict(e) for e in recent_expenses],
+        recent_expenses=recent_expenses,
         category_data=category_data,
         monthly_data=monthly_data,
         shopping_items=[dict(s) for s in shopping_items],
         current_month=current_month,
-        current_year=current_year
+        current_year=current_year,
+        current_month_br=format_month_br(current_year, current_month)
     )
 
 # ==============================================================================
@@ -710,7 +781,7 @@ def dashboard(current_user, family_email, is_admin):
 @family_context
 def expenses(current_user, family_email, is_admin):
     """Lista todas as despesas da familia para o mes selecionado."""
-    
+
     conn = get_db_connection(app.config['DATABASE'])
     member_ids = get_family_member_ids(family_email)
 
@@ -770,8 +841,10 @@ def expenses(current_user, family_email, is_admin):
             expense['can_delete'] = True
             expense['delete_id'] = expense['original_id']
 
+    # CATEGORIAS SOMENTE DA FAMILIA
     categories = conn.execute(
-        'SELECT * FROM categories ORDER BY name'
+        'SELECT * FROM categories WHERE family_email = ? ORDER BY name',
+        (family_email,)
     ).fetchall()
 
     family_members = get_family_members(family_email)
@@ -788,7 +861,8 @@ def expenses(current_user, family_email, is_admin):
         filter_type=filter_type,
         filter_category=filter_category,
         filter_person=filter_person,
-        filter_month=filter_month
+        filter_month=filter_month,
+        filter_month_br=format_month_br(year, month)
     )
 
 @app.route('/expenses/add', methods=['GET', 'POST'])
@@ -796,7 +870,7 @@ def expenses(current_user, family_email, is_admin):
 @family_context
 def add_expense(current_user, family_email, is_admin):
     """Adiciona nova despesa."""
-    
+
     conn = get_db_connection(app.config['DATABASE'])
 
     if request.method == 'POST':
@@ -857,8 +931,10 @@ def add_expense(current_user, family_email, is_admin):
                 'warning'
             )
 
+            # CATEGORIAS SOMENTE DA FAMILIA
             categories = conn.execute(
-                'SELECT * FROM categories ORDER BY name'
+                'SELECT * FROM categories WHERE family_email = ? ORDER BY name',
+                (family_email,)
             ).fetchall()
 
             family_members = get_family_members(
@@ -960,8 +1036,10 @@ def add_expense(current_user, family_email, is_admin):
 
         return redirect(url_for('expenses'))
 
+    # CATEGORIAS SOMENTE DA FAMILIA
     categories = conn.execute(
-        'SELECT * FROM categories ORDER BY name'
+        'SELECT * FROM categories WHERE family_email = ? ORDER BY name',
+        (family_email,)
     ).fetchall()
 
     family_members = get_family_members(
@@ -1019,7 +1097,11 @@ def edit_expense(current_user, family_email, is_admin, id):
 
         if not description or amount <= 0:
             flash('Preencha descrição e valor válidos.', 'warning')
-            categories = conn.execute('SELECT * FROM categories ORDER BY name').fetchall()
+            # CATEGORIAS SOMENTE DA FAMILIA
+            categories = conn.execute(
+                'SELECT * FROM categories WHERE family_email = ? ORDER BY name',
+                (family_email,)
+            ).fetchall()
             family_members = get_family_members(family_email)
             conn.close()
             return render_template('expense_form.html',
@@ -1042,14 +1124,22 @@ def edit_expense(current_user, family_email, is_admin, id):
         flash('Despesa atualizada com sucesso!', 'success')
         return redirect(url_for('expenses'))
 
-    categories = conn.execute('SELECT * FROM categories ORDER BY name').fetchall()
+    # CATEGORIAS SOMENTE DA FAMILIA
+    categories = conn.execute(
+        'SELECT * FROM categories WHERE family_email = ? ORDER BY name',
+        (family_email,)
+    ).fetchall()
     family_members = get_family_members(family_email)
+
+    expense_dict = dict(expense)
+    expense_dict['expense_date_br'] = format_date_br(expense_dict['expense_date'])
+
     conn.close()
 
     return render_template('expense_form.html',
         current_user=current_user, is_admin=is_admin,
         categories=[dict(c) for c in categories], family_members=family_members,
-        expense=dict(expense), action='edit'
+        expense=expense_dict, action='edit'
     )
 
 @app.route('/expenses/delete/<int:id>', methods=['POST'])
@@ -1081,16 +1171,20 @@ def delete_expense(current_user, family_email, is_admin, id):
     return redirect(url_for('expenses'))
 
 # ==============================================================================
-# ROTAS DE CATEGORIAS
+# ROTAS DE CATEGORIAS - AGORA ISOLADAS POR FAMILIA
 # ==============================================================================
 
 @app.route('/categories')
 @login_required
 @family_context
 def categories(current_user, family_email, is_admin):
-    """Lista todas as categorias."""
+    """Lista todas as categorias DA FAMILIA (isolado por family_email)."""
     conn = get_db_connection(app.config['DATABASE'])
-    cats = conn.execute('SELECT * FROM categories ORDER BY name').fetchall()
+    # CORRECAO: Filtrar categorias SOMENTE da familia do usuario logado
+    cats = conn.execute(
+        'SELECT * FROM categories WHERE family_email = ? ORDER BY name',
+        (family_email,)
+    ).fetchall()
     conn.close()
 
     return render_template('categories.html',
@@ -1102,7 +1196,7 @@ def categories(current_user, family_email, is_admin):
 @login_required
 @family_context
 def add_category(current_user, family_email, is_admin):
-    """Adiciona nova categoria."""
+    """Adiciona nova categoria VINCULADA A FAMILIA."""
     name = request.form.get('name', '').strip()
     icon = request.form.get('icon', 'tag').strip()
     color = request.form.get('color', '#6c757d').strip()
@@ -1112,7 +1206,11 @@ def add_category(current_user, family_email, is_admin):
         return redirect(url_for('categories'))
 
     conn = get_db_connection(app.config['DATABASE'])
-    conn.execute('INSERT INTO categories (name, icon, color) VALUES (?, ?, ?)', (name, icon, color))
+    # CORRECAO: Inserir com family_email para vincular à familia
+    conn.execute(
+        'INSERT INTO categories (name, icon, color, family_email) VALUES (?, ?, ?, ?)',
+        (name, icon, color, family_email)
+    )
     conn.commit()
     conn.close()
 
@@ -1123,7 +1221,7 @@ def add_category(current_user, family_email, is_admin):
 @login_required
 @family_context
 def edit_category(current_user, family_email, is_admin, id):
-    """Edita uma categoria."""
+    """Edita uma categoria DA FAMILIA."""
     name = request.form.get('name', '').strip()
     icon = request.form.get('icon', 'tag').strip()
     color = request.form.get('color', '#6c757d').strip()
@@ -1133,7 +1231,21 @@ def edit_category(current_user, family_email, is_admin, id):
         return redirect(url_for('categories'))
 
     conn = get_db_connection(app.config['DATABASE'])
-    conn.execute('UPDATE categories SET name = ?, icon = ?, color = ? WHERE id = ?', (name, icon, color, id))
+    # CORRECAO: Verificar se a categoria pertence à familia antes de editar
+    cat = conn.execute(
+        'SELECT * FROM categories WHERE id = ? AND family_email = ?',
+        (id, family_email)
+    ).fetchone()
+
+    if not cat:
+        conn.close()
+        flash('Categoria não encontrada ou não pertence à sua família.', 'danger')
+        return redirect(url_for('categories'))
+
+    conn.execute(
+        'UPDATE categories SET name = ?, icon = ?, color = ? WHERE id = ? AND family_email = ?',
+        (name, icon, color, id, family_email)
+    )
     conn.commit()
     conn.close()
 
@@ -1144,16 +1256,32 @@ def edit_category(current_user, family_email, is_admin, id):
 @login_required
 @family_context
 def delete_category(current_user, family_email, is_admin, id):
-    """Exclui uma categoria."""
+    """Exclui uma categoria DA FAMILIA."""
     conn = get_db_connection(app.config['DATABASE'])
-    expenses_using = conn.execute('SELECT COUNT(*) as count FROM expenses WHERE category_id = ?', (id,)).fetchone()['count']
+
+    # CORRECAO: Verificar se a categoria pertence à familia
+    cat = conn.execute(
+        'SELECT * FROM categories WHERE id = ? AND family_email = ?',
+        (id, family_email)
+    ).fetchone()
+
+    if not cat:
+        conn.close()
+        flash('Categoria não encontrada ou não pertence à sua família.', 'danger')
+        return redirect(url_for('categories'))
+
+    # Verificar se está em uso por alguma despesa DA FAMILIA
+    expenses_using = conn.execute(
+        'SELECT COUNT(*) as count FROM expenses WHERE category_id = ? AND person_id IN (SELECT id FROM users WHERE email = ?)',
+        (id, family_email)
+    ).fetchone()['count']
 
     if expenses_using > 0:
         conn.close()
         flash('Não é possível excluir categoria em uso.', 'warning')
         return redirect(url_for('categories'))
 
-    conn.execute('DELETE FROM categories WHERE id = ?', (id,))
+    conn.execute('DELETE FROM categories WHERE id = ? AND family_email = ?', (id, family_email))
     conn.commit()
     conn.close()
 
@@ -1175,7 +1303,11 @@ def shopping(current_user, family_email, is_admin):
     query = "SELECT s.*, c.name as category_name, c.color as category_color, u.name as creator_name FROM shopping_list s LEFT JOIN categories c ON s.category_id = c.id JOIN users u ON s.created_by = u.id WHERE s.created_by IN ({}) ORDER BY s.is_bought, s.created_at DESC".format(','.join('?' * len(member_ids)))
     items = conn.execute(query, tuple(member_ids)).fetchall()
 
-    categories = conn.execute('SELECT * FROM categories ORDER BY name').fetchall()
+    # CATEGORIAS SOMENTE DA FAMILIA
+    categories = conn.execute(
+        'SELECT * FROM categories WHERE family_email = ? ORDER BY name',
+        (family_email,)
+    ).fetchall()
     conn.close()
 
     return render_template('shopping.html',
@@ -1309,7 +1441,10 @@ def reports(current_user, family_email, is_admin):
     annual_data = []
     for m in range(1, 13):
         m_totals = get_expense_totals_for_month(conn, member_ids, year, m)
-        annual_data.append({'month': m, 'total': m_totals['total']})
+        annual_data.append({
+            'month': format_month_short_br(year, m),
+            'total': m_totals['total']
+        })
 
     conn.close()
 
@@ -1322,7 +1457,8 @@ def reports(current_user, family_email, is_admin):
         fixed_expenses=fixed_expenses,
         installments=installments,
         annual_data=annual_data,
-        family_members=family_members
+        family_members=family_members,
+        current_month_br=format_month_br(year, month)
     )
 
 # ==============================================================================
@@ -1419,27 +1555,26 @@ def admin_change_password(current_user, family_email, is_admin, id):
 
     conn = get_db_connection(app.config['DATABASE'])
 
-    user = conn.execute('''
-        SELECT id, name
-        FROM users
-        WHERE id = ?
-    ''', (id,)).fetchone()
+    user = conn.execute(
+        'SELECT id, name FROM users WHERE id = ?',
+        (id,)
+    ).fetchone()
 
     if not user:
         conn.close()
         flash('Usuário não encontrado.', 'danger')
         return redirect(url_for('admin_users'))
 
-    conn.execute('''
-        UPDATE users
-        SET password_hash = ?
-        WHERE id = ?
-    ''', (password_hash, id))
+    conn.execute(
+        'UPDATE users SET password_hash = ? WHERE id = ?',
+        (password_hash, id)
+    )
 
     conn.commit()
     conn.close()
 
-    flash(f'Senha do usuário {user["name"]} alterada com sucesso!', 'success')
+    msg = 'Senha do usuário ' + user['name'] + ' alterada com sucesso!'
+    flash(msg, 'success')
 
     return redirect(url_for('admin_users'))
 
@@ -1478,7 +1613,7 @@ def api_dashboard_data(current_user, family_email, is_admin):
         m_year = month_date.year
         m_month = month_date.month
         m_totals = get_expense_totals_for_month(conn, member_ids, m_year, m_month)
-        monthly_labels.append(month_date.strftime('%b/%Y'))
+        monthly_labels.append(format_month_short_br(m_year, m_month))
         monthly_values.append(m_totals['total'])
 
     conn.close()

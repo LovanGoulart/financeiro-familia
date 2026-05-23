@@ -111,7 +111,7 @@
                     <tr>
 
                         <td>
-                            {{ expense.expense_date }}
+                            {{ expense.expense_date_br }}
                         </td>
 
                         <td>
@@ -183,7 +183,7 @@
                         </td>
 
                         <td class="currency" style="font-weight: 600;">
-                            R$ {{ "%.2f"|format(expense.amount) }}
+                            {{ "%.2f"|format(expense.amount)|replace('.', ',') }}
                         </td>
 
                         <td>
