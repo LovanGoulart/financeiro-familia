@@ -1159,3 +1159,156 @@ textarea.form-control {
     }
 
 }
+
+/* ==============================================================================
+   RESPONSIVIDADE MOBILE
+   ============================================================================== */
+
+img,
+table,
+canvas {
+    max-width: 100%;
+}
+
+/* Evita largura exagerada */
+* {
+    min-width: 0;
+}
+
+/* Cards e tabelas */
+.card,
+.stat-card,
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+/* Inputs */
+input,
+select,
+textarea,
+button {
+    max-width: 100%;
+}
+
+/* Corrige grids */
+.grid-2,
+.grid-3,
+.stats-grid,
+.dashboard-tables {
+    width: 100%;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+
+    body {
+        overflow-x: hidden;
+    }
+
+    .content-area {
+        padding: 12px;
+    }
+
+    .top-header {
+        padding: 0 10px;
+        gap: 10px;
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 60px;
+    }
+
+    .header-right {
+        gap: 8px;
+    }
+
+    .page-title {
+        font-size: 1rem;
+    }
+
+    /* Tabelas */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .data-table {
+        min-width: 700px;
+    }
+
+    /* Cards */
+    .card-body,
+    .card-header,
+    .stat-card {
+        padding: 15px;
+    }
+
+    /* Grid vira coluna */
+    .grid-2,
+    .grid-3,
+    .stats-grid,
+    .dashboard-tables {
+        grid-template-columns: 1fr !important;
+        display: grid;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        width: 260px;
+    }
+
+    /* Botões */
+    .btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+
+    /* Valores */
+    .stat-value {
+        font-size: 1.3rem;
+        word-break: break-word;
+    }
+
+    /* Sticky desliga no mobile */
+    .sticky-card {
+        position: relative !important;
+        top: 0 !important;
+    }
+
+    /* Corrige overflow horizontal */
+    .main-content,
+    .content-area,
+    .card {
+        overflow-x: hidden;
+    }
+}
+
+/* CELULARES PEQUENOS */
+@media (max-width: 480px) {
+
+    .content-area {
+        padding: 10px;
+    }
+
+    .card-body {
+        padding: 12px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 8px;
+        font-size: 0.75rem;
+    }
+
+    .page-title {
+        font-size: 0.95rem;
+    }
+
+    .btn-sm {
+        padding: 6px 10px;
+    }
+
+    .header-right {
+        flex-wrap: wrap;
+    }
+}
