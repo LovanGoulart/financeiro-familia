@@ -413,21 +413,67 @@ def logout():
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
-    """Recuperacao simples de senha."""
+
+    message = None
+    category = None
+    new_password = None
+
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
+
+        username = request.form.get('username', '').strip().lower()
+
+        if not username:
+
+            message = 'Informe um username.'
+            category = 'warning'
+
+            return render_template(
+                'forgot_password.html',
+                message=message,
+                category=category
+            )
 
         conn = get_db_connection(app.config['DATABASE'])
-        user = conn.execute('SELECT name, email FROM users WHERE username = ?', (username,)).fetchone()
-        conn.close()
+
+        user = conn.execute(
+            'SELECT * FROM users WHERE LOWER(username) = ?',
+            (username,)
+        ).fetchone()
 
         if user:
-            flash('Usuário encontrado: {} (Email: {}). Entre em contato com o administrador da família para redefinir a senha.'.format(user['name'], user['email']), 'info')
+
+            # gera nova senha temporaria
+            # gera nova senha temporaria
+            # senha padrao
+            new_password = '123456'
+
+            # criptografa
+            password_hash = generate_password_hash(new_password)
+
+            # atualiza no banco
+            conn.execute(
+                'UPDATE users SET password_hash = ? WHERE id = ?',
+                (password_hash, user['id'])
+            )
+
+            conn.commit()
+
+            message = 'Senha redefinida com sucesso!'
+            category = 'success'
+
         else:
-            flash('Usuário não encontrado.', 'danger')
 
-    return render_template('forgot_password.html')
+            message = 'Usuário não encontrado.'
+            category = 'danger'
 
+        conn.close()
+
+    return render_template(
+        'forgot_password.html',
+        message=message,
+        category=category,
+        new_password=new_password
+    )
 # ==============================================================================
 # ROTAS DO DASHBOARD
 # ==============================================================================
@@ -1354,6 +1400,47 @@ def admin_delete_user(current_user, family_email, is_admin, id):
     conn.close()
 
     flash('Usuário removido com sucesso.', 'success')
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/users/change-password/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+@family_context
+def admin_change_password(current_user, family_email, is_admin, id):
+    """Administrador altera senha de qualquer usuario."""
+
+    new_password = request.form.get('new_password', '').strip()
+
+    if len(new_password) < 4:
+        flash('A senha deve ter pelo menos 4 caracteres.', 'danger')
+        return redirect(url_for('admin_users'))
+
+    password_hash = generate_password_hash(new_password)
+
+    conn = get_db_connection(app.config['DATABASE'])
+
+    user = conn.execute('''
+        SELECT id, name
+        FROM users
+        WHERE id = ?
+    ''', (id,)).fetchone()
+
+    if not user:
+        conn.close()
+        flash('Usuário não encontrado.', 'danger')
+        return redirect(url_for('admin_users'))
+
+    conn.execute('''
+        UPDATE users
+        SET password_hash = ?
+        WHERE id = ?
+    ''', (password_hash, id))
+
+    conn.commit()
+    conn.close()
+
+    flash(f'Senha do usuário {user["name"]} alterada com sucesso!', 'success')
+
     return redirect(url_for('admin_users'))
 
 # ==============================================================================

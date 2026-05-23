@@ -660,6 +660,12 @@ textarea.form-control {
 }
 
 /* Alerts */
+
+.flash-container{
+    margin-bottom:20px;
+}
+
+
 .alert {
     padding: 15px 20px;
     border-radius: 10px;

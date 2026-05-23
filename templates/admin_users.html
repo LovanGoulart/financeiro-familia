@@ -43,7 +43,8 @@
                         <th>Usuário</th>
                         <th>Nome</th>
                         <th>Papel</th>
-                        <th>Ações</th>
+                        <th>Nova Senha</th>
+                        <th>Ações</th>                        
                     </tr>
                 </thead>
                 <tbody>
@@ -53,22 +54,95 @@
                         <td>{{ member.name }}</td>
                         <td>
                             <span class="badge {% if member.role == 'admin' %}badge-primary{% else %}badge-secondary{% endif %}">
-                                {{ 'Administrador' if member.role == 'admin' else 'Usuario' }}
+                                {{ 'Administrador' if member.role == 'admin' else 'Usuário' }}
                             </span>
                         </td>
-                        <td>
-                            {% if member.id != current_user.id %}
-                            <form method="POST" action="{{ url_for('admin_delete_user', id=member.id) }}" 
-                                   data-confirm="Tem certeza que deseja remover {{ member.name }}? Todas as despesas serão transferidas para você." 
-                                    style="display: inline;">
-                                <button type="submit" class="btn btn-sm btn-icon" style="background: var(--danger); color: white;" title="Remover">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                            {% else %}
-                            <span style="color: var(--gray); font-size: 0.85rem;">Você</span>
-                            {% endif %}
-                        </td>
+<!-- NOVA SENHA -->
+<td>
+    <form method="POST"
+          action="{{ url_for('admin_change_password', id=member.id) }}"
+          style="display: flex; align-items: center; gap: 8px;">
+
+        <input type="password"
+               name="new_password"
+               class="form-control"
+               placeholder="Nova senha"
+               minlength="4"
+               required
+               style="
+                    width: 140px;
+                    min-width: 140px;
+                    height: 38px;
+               ">
+
+        <button type="submit"
+                class="btn btn-sm btn-icon"
+                style="
+                    width: 38px;
+                    height: 38px;
+                    background: var(--warning);
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0;
+                    border-radius: 8px;
+                "
+                title="Trocar senha">
+
+            <i class="fas fa-key"></i>
+
+        </button>
+
+    </form>
+</td>
+
+<!-- ACOES -->
+<td style="vertical-align: middle; text-align: center;">
+
+    {% if member.id != current_user.id %}
+
+    <form method="POST"
+          action="{{ url_for('admin_delete_user', id=member.id) }}"
+          data-confirm="Tem certeza que deseja remover {{ member.name }}?"
+          style="margin-left: -5px;">
+
+        <button type="submit"
+                class="btn btn-sm btn-icon"
+                style="
+                    width: 38px;
+                    height: 38px;
+                    background: var(--danger);
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0;
+                    border-radius: 8px;
+                "
+                title="Remover">
+
+            <i class="fas fa-trash"></i>
+
+        </button>
+
+    </form>
+
+    {% else %}
+
+    <span style="
+        color: var(--gray);
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        height: 38px;"
+    >
+        Você
+    </span>
+
+    {% endif %}
+
+</td>
                     </tr>
                     {% endfor %}
                 </tbody>
