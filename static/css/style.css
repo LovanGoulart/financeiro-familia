@@ -326,10 +326,34 @@ button {
     color: var(--text-primary);
 }
 
+/* ==============================================================================
+   HEADER ACTIONS
+   ============================================================================== */
+
 .header-right {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
+}
+
+.header-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    transition: var(--transition);
+    border: 1px solid var(--border-color);
+}
+
+.header-icon:hover,
+.header-icon.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    box-shadow: var(--shadow);
 }
 
 .theme-toggle {
@@ -364,7 +388,7 @@ button {
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
     transition: var(--transition);
-    overflow: hidden;
+    overflow: visible;
 }
 
 .card:hover {
@@ -1083,4 +1107,55 @@ textarea.form-control {
         box-shadow: none;
         border: 1px solid #ddd;
     }
+}
+
+/* ==============================================================================
+   DASHBOARD - CARD FIXO PROXIMAS PARCELAS
+   ============================================================================== */
+
+.dashboard-tables {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 25px;
+    align-items: start;
+
+    /* IMPORTANTE */
+    overflow: visible !important;
+}
+
+.dashboard-tables > * {
+    overflow: visible !important;
+    min-height: 0;
+}
+
+.sticky-card {
+    position: sticky;
+    top: 180px;
+    align-self: start;
+
+    /* IMPORTANTE */
+    overflow: visible !important;
+}
+
+/* Evita quebrar sticky */
+.main-content,
+.content-area,
+.card,
+.card-body,
+.grid-2 {
+    overflow: visible !important;
+}
+
+/* MOBILE */
+@media (max-width: 1024px) {
+
+    .dashboard-tables {
+        grid-template-columns: 1fr;
+    }
+
+    .sticky-card {
+        position: relative;
+        top: 0;
+    }
+
 }
