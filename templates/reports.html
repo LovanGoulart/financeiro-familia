@@ -321,9 +321,9 @@
 
                     <tr>
                         <th>Descrição</th>
+                        <th>Valor</th>
                         <th>Pessoa</th>
                         <th>Frequência</th>
-                        <th>Valor</th>
                     </tr>
 
                 </thead>
@@ -338,26 +338,21 @@
                             {{ expense.description }}
                         </td>
 
+                        <td class="currency" style="font-weight:600;">
+                            {{ expense.amount|currency_br }}
+                        </td>
+
                         <td>
                             {{ expense.person_name }}
                         </td>
 
                         <td>
-
                             <span class="badge badge-warning">
 
                                 {{ expense.recurring_frequency|title }}
 
                             </span>
-
                         </td>
-
-                        <td class="currency" style="font-weight:600;">
-
-                            {{ expense.amount|currency_br }}
-
-                        </td>
-
                     </tr>
 
                     {% else %}
@@ -407,10 +402,10 @@
 
                     <tr>
                         <th>Descrição</th>
-                        <th>Pessoa</th>
-                        <th>Parcela</th>
                         <th>Valor</th>
                         <th>Restante</th>
+                        <th>Pessoa</th>
+                        <th>Parcela</th>
                     </tr>
 
                 </thead>
@@ -423,6 +418,20 @@
 
                         <td>
                             {{ inst.description }}
+                        </td>
+
+                         <td class="currency">
+                            {{ inst.amount|currency_br }}
+                        </td>
+
+                        <td>
+
+                            {% set remaining = ((inst.installment_total - inst.installment_number) * inst.amount) %}
+
+                            <span class="currency">
+                                {{ remaining|currency_br }}
+                            </span>
+
                         </td>
 
                         <td>
@@ -438,21 +447,6 @@
                             </span>
 
                         </td>
-
-                        <td class="currency">
-                            {{ inst.amount|currency_br }}
-                        </td>
-
-                        <td>
-
-                            {% set remaining = ((inst.installment_total - inst.installment_number) * inst.amount) %}
-
-                            <span class="currency">
-                                {{ remaining|currency_br }}
-                            </span>
-
-                        </td>
-
                     </tr>
 
                     {% else %}

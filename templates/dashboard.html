@@ -392,8 +392,8 @@
                     <thead>
                         <tr>
                             <th>Descrição</th>
-                            <th>Pessoa</th>
                             <th>Valor</th>
+                            <th>Pessoa</th>
                             <th>Data</th>
                         </tr>
                     </thead>
@@ -440,16 +440,16 @@
 
                                     </div>
 
+                                    <td class="currency">
+                                        {{ expense.amount|currency_br }}
+                                    </td>
+
                                 </div>
 
                             </td>
 
                             <td>
                                 {{ expense.person_name }}
-                            </td>
-
-                            <td class="currency">
-                                {{ expense.amount|currency_br }}
                             </td>
 
                             <td>
@@ -505,8 +505,8 @@
                     <thead>
                         <tr>
                             <th>Descrição</th>
-                            <th>Parcela</th>
                             <th>Valor</th>
+                            <th>Parcela</th>
                             <th>Data</th>
                         </tr>
                     </thead>
@@ -521,6 +521,10 @@
                                 {{ inst.description }}
                             </td>
 
+                            <td class="currency">
+                                {{ inst.amount|currency_br }}
+                            </td>
+
                             <td>
 
                                {% if inst.is_installment %}
@@ -533,10 +537,6 @@
                                         </span>
                                 {% endif %}
 
-                            </td>
-
-                            <td class="currency">
-                                {{ inst.amount|currency_br }}
                             </td>
 
                             <td>
