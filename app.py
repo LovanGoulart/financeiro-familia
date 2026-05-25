@@ -52,13 +52,13 @@ def format_date_br(date_obj):
 def format_month_br(year, month):
     """Formata mes/ano para exibicao em portugues."""
     meses = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
     return "{} / {}".format(meses[month], year)
 
 def format_month_short_br(year, month):
     """Formata mes/ano abreviado."""
     meses_abr = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-                 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+                    'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
     return "{}/{}".format(meses_abr[month], year)
 
 def parse_date_br(date_str):
@@ -183,7 +183,7 @@ def generate_recurring_expenses(conn, member_ids, target_year, target_month):
         if freq == 'mensal':
             # Aparece todo mes a partir da data inicial
             should_show = (target_date.year > exp_date.year or 
-                          (target_date.year == exp_date.year and target_date.month >= exp_date.month))
+                            (target_date.year == exp_date.year and target_date.month >= exp_date.month))
         elif freq == 'semanal':
             # Calcula semanas entre a data inicial e o mes alvo
             days_diff = (target_date - exp_date).days
@@ -192,7 +192,7 @@ def generate_recurring_expenses(conn, member_ids, target_year, target_month):
         elif freq == 'anual':
             # Aparece no mesmo mes todo ano a partir do ano inicial
             should_show = (target_date.year > exp_date.year or 
-                          (target_date.year == exp_date.year and target_date.month >= exp_date.month))
+                            (target_date.year == exp_date.year and target_date.month >= exp_date.month))
             # Verifica se eh o mes correto para anual
             if should_show:
                 should_show = (target_date.month == exp_date.month)
@@ -362,6 +362,20 @@ def month_br_filter(value):
             mes = meses_abr.get(parts[0], parts[0])
             return "{}/{}".format(mes, parts[1])
     return value
+
+@app.template_filter('currency_br')
+def currency_br_filter(value):
+    """Filtro Jinja2 para formatar valores monetarios no padrao brasileiro (1.234,56)."""
+    if value is None:
+        return 'R$ 0,00'
+    try:
+        # Formata com 2 casas decimais, separador de milhar como ponto e decimal como virgula
+        formatted = "{:,.2f}".format(float(value))
+        # Troca ponto por virgula e virgula por ponto (para o padrao BR)
+        formatted = formatted.replace(",", "X").replace(".", ",").replace("X", ".")
+        return "R$ {}".format(formatted)
+    except (ValueError, TypeError):
+        return 'R$ 0,00'
 
 # ==============================================================================
 # ROTAS DE AUTENTICACAO
@@ -644,7 +658,7 @@ def dashboard(current_user, family_email, is_admin):
         next_month = current_month + 1
         next_year = current_year
 
-       # PARCELAS do proximo mes
+        # PARCELAS do proximo mes
     next_installments = generate_installment_expenses(
         conn,
         member_ids,
@@ -660,21 +674,38 @@ def dashboard(current_user, family_email, is_admin):
         next_month
     )
 
-    # junta parcelas + fixas
+    # junta parcelas + fixas (NAO inclui comuns na tabela de proximas parcelas)
     next_installments.extend(next_fixed)
 
-        # TOTAL PREVISTO DO PROXIMO MES
-    next_month_total = sum(item['amount'] for item in next_installments)
+        # TOTAL PREVISTO DO PROXIMO MES (parcelas + fixas + comuns)
+    # Calcular total completo incluindo despesas comuns do proximo mes
+    next_regular = get_all_expenses_for_month(
+        conn,
+        member_ids,
+        next_year,
+        next_month,
+        include_regular=True
+    )
+    next_regular = [
+        e for e in next_regular 
+        if not e.get('is_generated') and 
+            not e.get('is_recurring') and 
+            not e.get('is_installment')
+    ]
+
+    # Total completo: parcelas + fixas + comuns
+    all_next_month = next_installments + next_regular
+    next_month_total = sum(item['amount'] for item in all_next_month)
 
     next_month_shared = sum(
         item['amount']
-        for item in next_installments
+        for item in all_next_month
         if item['expense_type'] == 'compartilhado'
     )
 
     next_month_individual = sum(
         item['amount']
-        for item in next_installments
+        for item in all_next_month
         if item['expense_type'] == 'individual'
     )
 
@@ -693,11 +724,9 @@ def dashboard(current_user, family_email, is_admin):
     # ordena por data
     next_installments = sorted(
         next_installments,
-        key=lambda x: x['expense_date']
+        key=lambda x: x['expense_date'],
+        reverse=True
     )
-
-    # ULTIMAS MOVIMENTACOES (apenas despesas reais, nao geradas)
-    query = "SELECT e.*, u.name as person_name, c.name as category_name, c.color as category_color FROM expenses e JOIN users u ON e.person_id = u.id LEFT JOIN categories c ON e.category_id = c.id WHERE e.person_id IN ({}) ORDER BY e.created_at DESC LIMIT 10".format(','.join('?' * len(member_ids)))
 
     # ULTIMAS MOVIMENTACOES (apenas despesas reais, nao geradas)
     query = "SELECT e.*, u.name as person_name, c.name as category_name, c.color as category_color FROM expenses e JOIN users u ON e.person_id = u.id LEFT JOIN categories c ON e.category_id = c.id WHERE e.person_id IN ({}) ORDER BY e.created_at DESC LIMIT 10".format(','.join('?' * len(member_ids)))
@@ -1116,8 +1145,8 @@ def edit_expense(current_user, family_email, is_admin, id):
             is_installment = ?, installment_total = ?, installment_number = ?, notes = ? 
             WHERE id = ?"""
         conn.execute(sql, (description, amount, expense_date, category_id, person_id, 
-                          expense_type, is_recurring, recurring_frequency, None, 
-                          is_installment, installment_total, installment_number, notes, id))
+                            expense_type, is_recurring, recurring_frequency, None, 
+                            is_installment, installment_total, installment_number, notes, id))
 
         conn.commit()
         conn.close()
@@ -1431,7 +1460,7 @@ def reports(current_user, family_email, is_admin):
 
     # Despesas fixas (recorrentes) do mes
     fixed_expenses = [e for e in month_totals['expenses'] 
-                      if e['is_recurring'] == 1 or e.get('generation_type') == 'recorrente']
+                        if e['is_recurring'] == 1 or e.get('generation_type') == 'recorrente']
 
     # Parcelas do mes
     installments = [e for e in month_totals['expenses'] 

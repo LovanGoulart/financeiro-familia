@@ -14,11 +14,11 @@
         </div>
 
         <div class="stat-label">
-            Total do Mês
+            Total de {{ current_month_br.split(' / ')[0] }}
         </div>
 
         <div class="stat-value currency">
-            R$ {{ "%.2f"|format(total_month) }}
+            {{ total_month|currency_br }}
         </div>
     </div>
 
@@ -32,7 +32,7 @@
         </div>
 
         <div class="stat-value currency">
-            R$ {{ "%.2f"|format(shared_month) }}
+            {{ shared_month|currency_br }}
         </div>
     </div>
 
@@ -46,7 +46,7 @@
         </div>
 
         <div class="stat-value currency">
-            R$ {{ "%.2f"|format(individual_month) }}
+            {{ individual_month|currency_br }}
         </div>
     </div>
 
@@ -60,7 +60,7 @@
         </div>
 
         <div class="stat-value currency">
-            R$ {{ "%.2f"|format(fixed_month) }}
+            {{ fixed_month|currency_br }}
         </div>
     </div>
 
@@ -74,25 +74,9 @@
         </div>
 
         <div class="stat-value currency">
-            R$ {{ "%.2f"|format(installments_month) }}
+            {{ installments_month|currency_br }}
         </div>
     </div>
-
-    <div class="stat-card dark">
-
-    <div class="stat-icon">
-        <i class="fas fa-calendar"></i>
-    </div>
-
-    <div class="stat-label">
-        Total do Ano
-    </div>
-
-    <div class="stat-value currency">
-        R$ {{ "%.2f"|format(total_year) }}
-    </div>
-
-</div>
 
 <div class="stat-card {% if spent_more %}danger{% else %}success{% endif %}">
 
@@ -106,9 +90,9 @@
 
     <div class="stat-value currency">
         {% if spent_more %}
-            +R$ {{ "%.2f"|format(difference_month) }}
+            +{{ difference_month|currency_br }}
         {% else %}
-            -R$ {{ "%.2f"|format(difference_month|abs) }}
+            -{{ difference_month|abs|currency_br }}
         {% endif %}
     </div>
 
@@ -122,21 +106,41 @@
 
 </div>
 
- <div class="stat-card primary">
+            <div class="stat-card primary">
+    <div class="stat-icon">
+        <i class="fas fa-wallet"></i>
+    </div>
 
-                <div class="stat-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
+    <div class="stat-label">
+        {% set meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] %}
+        {% set next_m = current_month + 1 %}
+        {% set next_y = current_year %}
+        {% if next_m > 12 %}{% set next_m = 1 %}{% set next_y = current_year + 1 %}{% endif %}
+        Próximo Mês ({{ meses[next_m - 1] }})
+    </div>
 
-                <div class="stat-label">
-                    Próximo mês
-                </div>
+    <div class="stat-value currency">
+        {{ next_month_total|currency_br }}
+    </div>
+</div>
 
-                <div class="stat-value currency">
-                    R$ {{ "%.2f"|format(next_month_total) }}
-                </div>
+            
+<div class="stat-card dark">
 
-            </div>
+    <div class="stat-icon">
+        <i class="fas fa-calendar"></i>
+    </div>
+
+    <div class="stat-label">
+        Total de {{ current_year }}
+    </div>
+
+    <div class="stat-value currency">
+        {{ total_year|currency_br }}
+    </div>
+
+</div>
+
 
 </div>
 
@@ -167,7 +171,7 @@
                 </div>
 
                 <div class="stat-value currency">
-                    R$ {{ "%.2f"|format(next_month_total) }}
+                    {{ next_month_total|currency_br }}
                 </div>
 
             </div>
@@ -183,7 +187,7 @@
                 </div>
 
                 <div class="stat-value currency">
-                    R$ {{ "%.2f"|format(next_month_shared) }}
+                    {{ next_month_shared|currency_br }}
                 </div>
 
             </div>
@@ -199,7 +203,7 @@
                 </div>
 
                 <div class="stat-value currency">
-                    R$ {{ "%.2f"|format(next_month_individual) }}
+                    {{ next_month_individual|currency_br }}
                 </div>
 
             </div>
@@ -215,7 +219,7 @@
                 </div>
 
                 <div class="stat-value currency">
-                    R$ {{ "%.2f"|format(next_month_fixed) }}
+                    {{ next_month_fixed|currency_br }}
                 </div>
 
             </div>
@@ -231,7 +235,7 @@
                 </div>
 
                 <div class="stat-value currency">
-                    R$ {{ "%.2f"|format(next_month_installments) }}
+                    {{ next_month_installments|currency_br }}
                 </div>
 
             </div>
@@ -268,9 +272,9 @@
                 <div class="division-amount {% if d.owes %}owes{% elif d.receives %}receives{% else %}balanced{% endif %}">
 
                     {% if d.owes %}
-                        Deve R$ {{ "%.2f"|format(d.amount) }}
+                        Deve {{ d.amount|currency_br }}
                     {% elif d.receives %}
-                        Recebe R$ {{ "%.2f"|format(d.amount) }}
+                        Recebe {{ d.amount|currency_br }}
                     {% else %}
                         Equilibrado
                     {% endif %}
@@ -278,9 +282,9 @@
                 </div>
 
                 <div class="division-status">
-                    Pagou: R$ {{ "%.2f"|format(d.paid) }}
+                    Pagou: {{ d.paid|currency_br }}
                     <br>
-                    Ideal: R$ {{ "%.2f"|format(d.ideal) }}
+                    Ideal: {{ d.ideal|currency_br }}
                 </div>
 
             </div>
@@ -298,7 +302,7 @@
 <div class="grid-2">
 
     <!-- CATEGORIAS -->
-    <div class="card">
+    <div class="sticky-card">
 
         <div class="card-header">
             <span class="card-title">
@@ -360,10 +364,11 @@
 </div>
 
 <!-- TABELAS -->
-<div class="grid-2 dashboard-tables" style="margin-top: 25px;">
 
-    <!-- ULTIMAS MOVIMENTACOES -->
-    <div class="card">
+<div class="grid-2 dashboard-tables" style="margin-top: 25px;">
+    
+    <!-- ULTIMAS MOVIMENTACOES-->
+    <div class="card sticky-card">
 
         <div class="card-header">
 
@@ -444,7 +449,7 @@
                             </td>
 
                             <td class="currency">
-                                R$ {{ "%.2f"|format(expense.amount) }}
+                                {{ expense.amount|currency_br }}
                             </td>
 
                             <td>
@@ -479,7 +484,7 @@
 
     </div>
 
-    <!-- PROXIMAS PARCELAS -->
+    <!-- PROXIMAS PARCELAS-->
     <div class="card sticky-card">
 
         <div class="card-header">
@@ -531,7 +536,7 @@
                             </td>
 
                             <td class="currency">
-                                R$ {{ "%.2f"|format(inst.amount) }}
+                                {{ inst.amount|currency_br }}
                             </td>
 
                             <td>
