@@ -5,6 +5,86 @@
 
 {% block content %}
 
+<!-- FILTROS -->
+<div class="card" style="margin-bottom: 25px;">
+
+    <div class="card-body">
+
+        <form method="GET"
+              action="{{ url_for('dashboard') }}"
+              style="display:flex; flex-wrap:wrap; gap:15px; align-items:end;">
+
+            <div class="form-group" style="flex:1; min-width:140px; margin-bottom:0;">
+
+                <label class="form-label">
+                    Ano
+                </label>
+
+                <select name="year" class="form-control" onchange="this.form.submit()">
+
+                    {% for y in range(2024, 2031) %}
+
+                    <option value="{{ y }}"
+                        {% if current_year|int == y %}selected{% endif %}>
+
+                        {{ y }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+        <div class="form-group" style="flex:1; min-width:140px; margin-bottom:0;">
+
+            <label class="form-label">
+                Mês
+            </label>
+
+                {% set meses = [
+                    'Janeiro', 'Fevereiro', 'Março', 'Abril',
+                    'Maio', 'Junho', 'Julho', 'Agosto',
+                    'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                ] %}
+
+                <select name="month" class="form-control" onchange="this.form.submit()">
+
+                    {% for m in range(1, 13) %}
+
+                    <option value="{{ m }}"
+                        {% if current_month|int == m %}selected{% endif %}>
+
+                        {{ meses[m-1] }}
+
+                    </option>
+
+                        {% endfor %}
+
+                </select>
+        </div>
+        
+            <!--<div style="display:flex; gap:10px;">
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i>Gerar
+                </button>
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        onclick="window.print()">
+                    <i class="fas fa-print"></i>Imprimir
+                </button>
+
+            </div>-->
+
+        </form>
+
+    </div>
+
+</div>
+
 <!-- RESUMO -->
 <div class="stats-grid">
 

@@ -564,8 +564,20 @@ def dashboard(current_user, family_email, is_admin):
     member_ids = get_family_member_ids(family_email)
     member_count = len(family_members)
 
-    current_year = datetime.now().year
-    current_month = datetime.now().month
+    # MES E ANO SELECIONADOS
+    today = datetime.now()
+
+    current_year = request.args.get(
+        'year',
+        today.year,
+        type=int
+    )
+
+    current_month = request.args.get(
+        'month',
+        today.month,
+        type=int
+    )
 
     # TOTAIS DO MES ATUAL (com recorrentes e parcelas materializadas)
     month_totals = get_expense_totals_for_month(conn, member_ids, current_year, current_month)
@@ -750,16 +762,30 @@ def dashboard(current_user, family_email, is_admin):
     category_data = sorted(category_totals.values(), key=lambda x: x['total'], reverse=True)
     category_data = [c for c in category_data if c['total'] > 0]
 
-    # DADOS PARA GRAFICOS - MENSAL (ultimos 6 meses)
+   # DADOS PARA GRAFICOS - MENSAL (ultimos 6 meses baseado no filtro)
     monthly_data = []
-    for i in range(5, -1, -1):
-        month_date = datetime.now() - timedelta(days=i*30)
-        m_year = month_date.year
-        m_month = month_date.month
 
-        m_totals = get_expense_totals_for_month(conn, member_ids, m_year, m_month)
+    base_year = current_year
+    base_month = current_month
+
+    for i in range(5, -1, -1):
+
+        calc_month = base_month - i
+        calc_year = base_year
+
+        while calc_month <= 0:
+            calc_month += 12
+            calc_year -= 1
+
+        m_totals = get_expense_totals_for_month(
+            conn,
+            member_ids,
+            calc_year,
+            calc_month
+        )
+
         monthly_data.append({
-            'month': format_month_short_br(m_year, m_month),
+            'month': format_month_short_br(calc_year, calc_month),
             'total': m_totals['total']
         })
 
