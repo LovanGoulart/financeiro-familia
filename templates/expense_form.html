@@ -4,6 +4,29 @@
 {% block page_title %}{% if action == 'add' %}Nova Compra{% else %}Editar Despesa{% endif %}{% endblock %}
 
 {% block content %}
+
+<!-- ALERTA: SEM CATEGORIAS (somente ao adicionar nova compra) -->
+{% if action == 'add' and not categories %}
+<div class="card" style="margin-bottom: 25px; border: 2px solid var(--warning); background: rgba(245, 158, 11, 0.05);">
+    <div class="card-body" style="display: flex; align-items: center; gap: 15px; padding: 20px;">
+        <div style="width: 50px; height: 50px; border-radius: 12px; background: var(--warning); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div style="flex: 1;">
+            <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--warning); margin-bottom: 6px;">
+                <i class="fas fa-tags"></i> Nenhuma categoria criada
+            </h3>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.95rem;">
+                Você precisa criar pelo menos uma categoria antes de adicionar despesas.
+                <a href="{{ url_for('categories') }}" class="btn btn-sm btn-warning" style="margin-left: 10px;">
+                    <i class="fas fa-plus"></i> Criar Categorias
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="card" style="max-width: 700px; margin: 0 auto;">
     <div class="card-header">
         <span class="card-title">
@@ -59,8 +82,8 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Categoria</label>
-                    <select name="category_id" class="form-control">
-                        <option value="">Selecione...</option>
+                    <select name="category_id" class="form-control" {% if action == 'add' and not categories %}disabled{% endif %}>
+                        <option value="">{% if action == 'add' and not categories %}Crie categorias primeiro...{% else %}Selecione...{% endif %}</option>
                         {% for cat in categories %}
                         <option value="{{ cat.id }}" {% if expense and expense.category_id == cat.id %}selected{% endif %}>
                             {{ cat.name }}
@@ -140,7 +163,7 @@
             </div>
 
             <div style="display: flex; gap: 15px; margin-top: 25px;">
-                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;" {% if action == 'add' and not categories %}disabled{% endif %}>
                     <i class="fas fa-save"></i>
                     {% if action == 'add' %}Salvar Despesa{% else %}Atualizar Despesa{% endif %}
                 </button>
