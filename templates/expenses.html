@@ -94,12 +94,12 @@
                 <thead>
                     <tr>
                         <th>Descrição</th>
-                        <th style="text-align: center;">Categoria</th>
+                        <!--<th style="text-align: center;">Categoria</th>-->
                         <th>Valor</th>
-                        <th>Pessoa</th>
+                        <!--<th>Pessoa</th>-->
                         <th style="text-align: center;">Data</th>
-                        <th style="text-align: center;">Tipo</th>
-                        <th>Info</th>
+                        <!--<th style="text-align: center;">Tipo</th>-->
+                        <!--<th>Info</th>-->
                         <th style="text-align: center;">Ações</th>
                     </tr>
                 </thead>
@@ -137,7 +137,7 @@
 
                         </td>
 <!---------------------------------------CATEGORIA---------------------------------------------------------->
-                        <td style="text-align: center;">
+                        <!--<td style="text-align: center;">
 
                                 {% if expense.category_name %}
 
@@ -157,21 +157,21 @@
 
                             {% endif %}
 
-                        </td>
+                        </td>-->
 <!--------------------------------------VALOR----------------------------------------------------------->
                         <td class="currency" style="font-weight: 600;">
                             {{ expense.amount|currency_br }}
                         </td>
 <!---------------------------------------PESSOA---------------------------------------------------------->
-                        <td>
+                        <!--<td>
                             {{ expense.person_name }}
-                        </td>
+                        </td>-->
 <!---------------------------------------DATA------------------------------------------------------------->
                         <td style="text-align: center;">
                             {{ expense.expense_date_br }}
                         </td>
 <!---------------------------------------TIPO---------------------------------------------------------->
-                        <td style="text-align: center;">
+                        <!--<td style="text-align: center;">
 
                             <span class="badge
                                 {% if expense.expense_type == 'compartilhado' %}
@@ -184,9 +184,9 @@
 
                             </span>
 
-                        </td>
+                        </td>-->
 <!----------------------------------------INFO--------------------------------------------------------->
-                        <td>
+                        <!--<td>
 
                             {% if expense.is_recurring %}
                             <span class="badge badge-warning"
@@ -202,7 +202,7 @@
                             </span>
                             {% endif %}
 
-                        </td>
+                        </td>-->
 <!----------------------------------------AÇÕES--------------------------------------------------------->
                         <td style="text-align: center;">
 
