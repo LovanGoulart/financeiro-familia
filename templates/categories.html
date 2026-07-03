@@ -19,35 +19,35 @@
 
     <label class="form-label">Ícone</label>
 
-    <select name="icon" class="form-control">
+    <select name="icon" id="iconSelect" class="form-control" onchange="autoSelectColor(this)">
 
-        <option value="tag">🏷️ Tag</option>
-        <option value="shopping-cart">🛒 Supermercado</option>
-        <option value="utensils">🍔 Alimentação</option>
-        <option value="car">🚗 Gastos com carro</option>
-        <option value="house">🏠 Contas da Casa</option>
-        <option value="bolt">⚡  Eletrônicos</option>
-        <option value="wifi">📶 Compras Online</option>
-        <option value="heart">❤️ Saúde</option>
-        <option value="film">🎬 Lazer</option>
-        <option value="gift">🎁 Presentes</option>
-        <option value="credit-card">💳 Cartão</option>
-        <option value="money-bill-wave">💵 Farmácia</option>
-        <option value="piggy-bank">🐷 Economia</option>
-        <option value="dog">🐶 Pets</option>
-        <option value="music">🎵 Festas</option>
-        <option value="plane">✈️ Viagem</option>
-        <option value="shirt">👕 Roupas</option>
-        <option value="gamepad">🎮 Outros</option>
-        <option value="briefcase">💼 Trabalho</option>
-        <option value="graduation-cap">🎓 Estudos</option>
+        <option value="tag" data-color="#6366f1">🏷️ Tag</option>
+        <option value="shopping-cart" data-color="#f59e0b">🛒 Supermercado</option>
+        <option value="utensils" data-color="#ef4444">🍔 Alimentação</option>
+        <option value="car" data-color="#3b82f6">🚗 Gastos com carro</option>
+        <option value="house" data-color="#8b5cf6">🏠 Contas da Casa</option>
+        <option value="bolt" data-color="#f97316">⚡ Eletrônicos</option>
+        <option value="wifi" data-color="#06b6d4">📶 Compras Online</option>
+        <option value="heart" data-color="#ec4899">❤️ Saúde</option>
+        <option value="film" data-color="#a855f7">🎬 Lazer</option>
+        <option value="gift" data-color="#e11d48">🎁 Presentes</option>
+        <option value="credit-card" data-color="#14b8a6">💳 Cartão</option>
+        <option value="money-bill-wave" data-color="#22c55e">💵 Farmácia</option>
+        <option value="piggy-bank" data-color="#f43f5e">🐷 Economia</option>
+        <option value="dog" data-color="#d97706">🐶 Pets</option>
+        <option value="music" data-color="#7c3aed">🎵 Festas</option>
+        <option value="plane" data-color="#0ea5e9">✈️ Viagem</option>
+        <option value="shirt" data-color="#10b981">👕 Roupas</option>
+        <option value="gamepad" data-color="#64748b">🎮 Outros</option>
+        <option value="briefcase" data-color="#b45309">💼 Trabalho</option>
+        <option value="graduation-cap" data-color="#0891b2">🎓 Estudos</option>
 
     </select>
 
 </div>
             <div class="form-group" style="flex: 1; min-width: 120px; margin-bottom: 0;">
                 <label class="form-label">Cor</label>
-                <input type="color" name="color" class="form-control" value="#6366f1" style="height: 44px; padding: 4px;">
+                <input type="color" name="color" id="colorInput" class="form-control" value="#6366f1" style="height: 44px; padding: 4px;">
             </div>
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Adicionar
@@ -148,6 +148,38 @@
 </div>
 
 <script>
+// Cores distintas para cada ícone (nunca repetidas)
+const iconColors = {
+    'tag': '#6366f1',
+    'shopping-cart': '#f59e0b',
+    'utensils': '#ef4444',
+    'car': '#3b82f6',
+    'house': '#8b5cf6',
+    'bolt': '#f97316',
+    'wifi': '#06b6d4',
+    'heart': '#ec4899',
+    'film': '#a855f7',
+    'gift': '#e11d48',
+    'credit-card': '#14b8a6',
+    'money-bill-wave': '#22c55e',
+    'piggy-bank': '#f43f5e',
+    'dog': '#d97706',
+    'music': '#7c3aed',
+    'plane': '#0ea5e9',
+    'shirt': '#10b981',
+    'gamepad': '#64748b',
+    'briefcase': '#b45309',
+    'graduation-cap': '#0891b2'
+};
+
+function autoSelectColor(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    const color = selectedOption.getAttribute('data-color');
+    if (color) {
+        document.getElementById('colorInput').value = color;
+    }
+}
+
 function editCategory(id, name, icon, color) {
     document.getElementById('editForm').action = '/categories/edit/' + id;
     document.getElementById('editName').value = name;
