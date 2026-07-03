@@ -4,14 +4,16 @@
 {% block page_title %}Lista de Compras{% endblock %}
 
 {% block content %}
-<!-- Add Item -->
+<!-- Add Item - Recolhível -->
 <div class="card" style="margin-bottom: 25px;">
-    <div class="card-header">
-        <span class="card-title"><i class="fas fa-plus"></i> Adicionar Item</span>
+    <div class="card-header" id="addItemHeader" style="cursor: pointer; user-select: none;">
+        <span class="card-title">
+            <i class="fas fa-plus" id="addItemIcon" style="transition: transform 0.3s ease;"></i> Adicionar Item
+        </span>
     </div>
-    <div class="card-body">
-        <form method="POST" 
-              action="{{ url_for('add_shopping_item') }}" 
+    <div class="card-body" id="addItemBody" style="display: none;">
+        <form method="POST"
+              action="{{ url_for('add_shopping_item') }}"
               style="display: flex; flex-wrap: wrap; gap: 15px; align-items: end;">
             <div class="form-group" style="flex: 2; min-width: 200px; margin-bottom: 0;">
                 <label class="form-label">Nome *</label>
@@ -41,6 +43,24 @@
     </div>
 </div>
 
+<script>
+(function() {
+    var header = document.getElementById('addItemHeader');
+    var body = document.getElementById('addItemBody');
+    var icon = document.getElementById('addItemIcon');
+
+    header.addEventListener('click', function() {
+        if (body.style.display === 'none') {
+            body.style.display = 'block';
+            icon.style.transform = 'rotate(45deg)';
+        } else {
+            body.style.display = 'none';
+            icon.style.transform = 'rotate(0deg)';
+        }
+    });
+})();
+</script>
+
 <!-- Shopping Items -->
 <div class="card">
     <div class="card-header">
@@ -54,20 +74,20 @@
                 <div class="shopping-name">{{ item.name }}</div>
                 <div class="shopping-meta">
                     {% if item.quantity %}Qtd: {{ item.quantity }}{% endif %}
-                    {% if item.category_name %}| 
+                    {% if item.category_name %}|
                     <span style="color: {{ item.category_color }}">{{ item.category_name }}</span>{% endif %}
                     {% if item.notes %}| {{ item.notes }}{% endif %}
                     | Por: {{ item.creator_name }}
                 </div>
             </div>
             <div class="shopping-actions">
-                <form method="POST" 
-                      action="{{ url_for('delete_shopping_item', id=item.id) }}" 
-                      data-confirm="Remover este item?" 
+                <form method="POST"
+                      action="{{ url_for('delete_shopping_item', id=item.id) }}"
+                      data-confirm="Remover este item?"
                       style="display: inline;">
-                <button type="submit" 
-                        class="btn btn-sm btn-icon" 
-                        style="background: var(--danger); color: white;" 
+                <button type="submit"
+                        class="btn btn-sm btn-icon"
+                        style="background: var(--danger); color: white;"
                         title="Remover">
                             <i class="fas fa-trash"></i>
                 </button>

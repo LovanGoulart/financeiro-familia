@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}{% if action == 'add' %}Nova Despesa{% else %}Editar Despesa{% endif %} - Financeiro Familiar{% endblock %}
-{% block page_title %}{% if action == 'add' %}Nova Despesa{% else %}Editar Despesa{% endif %}{% endblock %}
+{% block title %}{% if action == 'add' %}Nova Compra{% else %}Editar Despesa{% endif %} - Financeiro Familiar{% endblock %}
+{% block page_title %}{% if action == 'add' %}Nova Compra{% else %}Editar Despesa{% endif %}{% endblock %}
 
 {% block content %}
 <div class="card" style="max-width: 700px; margin: 0 auto;">
     <div class="card-header">
         <span class="card-title">
             {% if action == 'add' %}
-            <i class="fas fa-plus-circle"></i> Nova Despesa
+            <i class="fas fa-plus-circle"></i> Nova Compra
             {% else %}
             <i class="fas fa-edit"></i> Editar Despesa
             {% endif %}
