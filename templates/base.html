@@ -92,6 +92,7 @@
 
 /* ============================================
    MENU RODAPÉ PARA MOBILE
+   Tema claro por padrão
    ============================================ */
 .mobile-bottom-nav {
     display: none;
@@ -100,13 +101,13 @@
     left: 0;
     right: 0;
     height: 60px;
-    background: var(--sidebar-bg, #1e1e2d);
-    border-top: 1px solid var(--border-color, rgba(255,255,255,0.1));
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
     z-index: 9998;
     justify-content: space-around;
     align-items: center;
     padding: 0 5px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
 }
 
 .mobile-bottom-nav a {
@@ -114,7 +115,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: var(--sidebar-text, #a0a0b0);
+    color: #495057;
     text-decoration: none;
     font-size: 11px;
     gap: 3px;
@@ -131,11 +132,34 @@
 }
 
 .mobile-bottom-nav a.active {
-    color: #6366f1;
-    background: rgba(99, 102, 241, 0.12);
+    color: #4f46e5;
+    background: rgba(79, 70, 229, 0.1);
 }
 
 .mobile-bottom-nav a:hover {
+    color: #212529;
+    background: rgba(0,0,0,0.04);
+}
+
+/* ============================================
+   MENU RODAPÉ TEMA ESCURO
+   ============================================ */
+[data-theme="dark"] .mobile-bottom-nav {
+    background: #1e1e2d;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .mobile-bottom-nav a {
+    color: #a0a0b0;
+}
+
+[data-theme="dark"] .mobile-bottom-nav a.active {
+    color: #818cf8;
+    background: rgba(129, 140, 248, 0.15);
+}
+
+[data-theme="dark"] .mobile-bottom-nav a:hover {
     color: #fff;
     background: rgba(255,255,255,0.05);
 }
@@ -408,11 +432,11 @@
     <nav class="mobile-bottom-nav">
         <a href="{{ url_for('add_expense') }}" class="{% if request.endpoint in ['add_expense'] %}active{% endif %}">
             <i class="fas fa-plus"></i>
-            <span>Adicionar</span>
+            <span>Nova</span>
         </a>
         <a href="{{ url_for('shopping') }}" class="{% if request.endpoint in ['shopping'] %}active{% endif %}">
             <i class="fas fa-shopping-cart"></i>
-            <span>Compras</span>
+            <span>Lista</span>
         </a>
         <a href="{{ url_for('expenses') }}" class="{% if request.endpoint in ['expenses', 'add_expense', 'edit_expense'] %}active{% endif %}">
             <i class="fas fa-receipt"></i>
