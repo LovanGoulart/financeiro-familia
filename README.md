@@ -41,14 +41,14 @@ A aplicação é utilizada na organização financeira doméstica e recebe melho
 
 ## 📸 Demonstração do sistema
 
-Clique nas imagens para consultar os arquivos em tamanho maior.
+As capturas são exibidas sem ampliação. Clique em uma imagem para abrir o arquivo original.
 
 ### Visão geral
 
 Dashboard com seleção de mês e ano, total do período e separação entre despesas compartilhadas e individuais.
 
-<a href="tela%20inicial%281%29.png">
-  <img src="tela%20inicial%281%29.png" alt="Dashboard com resumo financeiro mensal" width="350">
+<a href="tela%20inicial.png">
+  <img src="tela%20inicial.png" alt="Dashboard com resumo financeiro mensal" width="219">
 </a>
 
 ### Despesas fixas e parceladas
@@ -56,7 +56,7 @@ Dashboard com seleção de mês e ano, total do período e separação entre des
 Indicadores para acompanhar despesas fixas, parcelamentos, comparação mensal e previsão de gastos do próximo mês.
 
 <a href="tela%20inicial2.png">
-  <img src="tela%20inicial2.png" alt="Indicadores de despesas fixas, parcelas e próximo mês" width="350">
+  <img src="tela%20inicial2.png" alt="Indicadores de despesas fixas, parcelas e próximo mês" width="249">
 </a>
 
 ### Divisão dos gastos compartilhados
@@ -64,7 +64,7 @@ Indicadores para acompanhar despesas fixas, parcelamentos, comparação mensal e
 Resumo dos valores pagos por cada integrante, da participação ideal na divisão e do saldo a contribuir ou receber.
 
 <a href="tela%20inicial%20-%20divis%C3%A3o%20de%20gastos.png">
-  <img src="tela%20inicial%20-%20divis%C3%A3o%20de%20gastos.png" alt="Divisão dos gastos compartilhados entre integrantes" width="350">
+  <img src="tela%20inicial%20-%20divis%C3%A3o%20de%20gastos.png" alt="Divisão dos gastos compartilhados entre integrantes" width="249">
 </a>
 
 ### Gráficos financeiros
@@ -72,7 +72,7 @@ Resumo dos valores pagos por cada integrante, da participação ideal na divisã
 Visualização da distribuição dos gastos por categoria e da evolução mensal das despesas.
 
 <a href="tela%20inicial%20-%20gr%C3%A1ficos.png">
-  <img src="tela%20inicial%20-%20gr%C3%A1ficos.png" alt="Gráficos de gastos por categoria e evolução mensal" width="350">
+  <img src="tela%20inicial%20-%20gr%C3%A1ficos.png" alt="Gráficos de gastos por categoria e evolução mensal" width="249">
 </a>
 
 ### Movimentações e próximas parcelas
@@ -80,7 +80,7 @@ Visualização da distribuição dos gastos por categoria e da evolução mensal
 Consulta das movimentações recentes e dos próximos lançamentos de despesas parceladas e fixas.
 
 <a href="tela%20inicial%20-%20movimenta%C3%A7%C3%B5es.png">
-  <img src="tela%20inicial%20-%20movimenta%C3%A7%C3%B5es.png" alt="Movimentações recentes e próximas parcelas" width="350">
+  <img src="tela%20inicial%20-%20movimenta%C3%A7%C3%B5es.png" alt="Movimentações recentes e próximas parcelas" width="250">
 </a>
 
 ### Registro de uma nova compra
@@ -88,7 +88,7 @@ Consulta das movimentações recentes e dos próximos lançamentos de despesas p
 Formulário para informar descrição, valor, data, categoria, responsável e tipo da despesa, com opção de compra no cartão de crédito.
 
 <a href="nova%20compra.png">
-  <img src="nova%20compra.png" alt="Formulário de cadastro de uma nova compra" width="350">
+  <img src="nova%20compra.png" alt="Formulário de cadastro de uma nova compra" width="248">
 </a>
 
 ### Gerenciamento de despesas
@@ -96,7 +96,7 @@ Formulário para informar descrição, valor, data, categoria, responsável e ti
 Listagem com filtros por mês, tipo, categoria e pessoa, além de opções para editar e excluir registros.
 
 <a href="despesas.png">
-  <img src="despesas.png" alt="Listagem de despesas com filtros" width="350">
+  <img src="despesas.png" alt="Listagem de despesas com filtros" width="252">
 </a>
 
 ### Lista de compras
@@ -104,7 +104,7 @@ Listagem com filtros por mês, tipo, categoria e pessoa, além de opções para 
 Organização dos itens que precisam ser comprados, com quantidade, categoria, observações e marcação de conclusão.
 
 <a href="lista%20de%20compras.png">
-  <img src="lista%20de%20compras.png" alt="Lista de compras com itens pendentes e comprados" width="350">
+  <img src="lista%20de%20compras.png" alt="Lista de compras com itens pendentes e comprados" width="253">
 </a>
 
 ## Como funciona a divisão dos gastos
