@@ -13,11 +13,12 @@
             <p class="login-subtitle">Entre para gerenciar suas finanças</p>
 
             <form method="POST" action="{{ url_for('login') }}">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
                 <div class="form-group">
-                    <label class="form-label">Username</label>
+                    <label class="form-label">Nome de usuário</label>
                     <div style="position: relative;">
                         <i class="fas fa-user" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gray);"></i>
-                        <input type="text" name="username" class="form-control" placeholder="Seu username" required style="padding-left: 42px;">
+                        <input type="text" name="username" class="form-control" placeholder="Seu nome de usuário" required style="padding-left: 42px;">
                     </div>
                 </div>
 

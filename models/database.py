@@ -91,6 +91,17 @@ def init_db(db_path):
         )
     """)
 
+    columns = {row['name'] for row in conn.execute('PRAGMA table_info(expenses)')}
+    if 'installment_remainder_cents' not in columns:
+        conn.execute('ALTER TABLE expenses ADD COLUMN installment_remainder_cents INTEGER NOT NULL DEFAULT 0')
+    conn.execute("""CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, family_email TEXT NOT NULL,
+        actor_id INTEGER NOT NULL, message TEXT NOT NULL, kind TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)""")
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_notifications_family ON notifications(family_email, id)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_users_family ON users(email)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_expenses_person_date ON expenses(person_id, expense_date)')
+
     # NENHUMA CATEGORIA PRE-CADASTRADA - banco vem vazio!
 
     conn.commit()

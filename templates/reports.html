@@ -22,7 +22,7 @@
 
                 <select name="year" class="form-control" onchange="this.form.submit()">
 
-                    {% for y in range(2024, 2031) %}
+                    {% for y in range(current_br_year - 5, current_br_year + 11) %}
 
                     <option value="{{ y }}"
                         {% if year == y %}selected{% endif %}>

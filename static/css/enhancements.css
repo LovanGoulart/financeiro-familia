@@ -1,0 +1,24 @@
+/* Resumo inicial: duas colunas somente no celular; desktop usa o layout original. */
+.payment-hint {font-size:.85rem; color:var(--text-secondary, #64748b); margin:12px 0;}
+[hidden] {display:none !important;}
+#toast-region {position:fixed; top:80px; right:16px; width:min(380px, calc(100vw - 32px)); z-index:12000; display:grid; gap:10px; pointer-events:none;}
+.finance-toast {display:flex; align-items:center; gap:12px; background:var(--bg-card, white); color:var(--text-primary, #1e293b); border:1px solid var(--border-color, #ddd); border-left:5px solid #4f46e5; padding:16px; border-radius:12px; box-shadow:0 8px 28px #0003; pointer-events:auto; animation:toast-in .2s ease;}
+.finance-toast.success {border-left-color:#10b981;}.finance-toast.warning {border-left-color:#f59e0b;}.finance-toast.danger {border-left-color:#ef4444;}
+.finance-toast span {flex:1; overflow-wrap:anywhere;}
+.finance-toast button {border:0; background:transparent; color:inherit; font-size:1.4rem; cursor:pointer; padding:6px;}
+.floating-panel {position:fixed; bottom:85px; left:50%; transform:translateX(-50%); width:min(420px, calc(100vw - 24px)); padding:20px; border-radius:16px; background:var(--bg-card, white); color:var(--text-primary, #1e293b); border:1px solid var(--border-color, #ddd); box-shadow:0 12px 40px #0003; z-index:11000;}
+.floating-panel p {margin:8px 0 14px; font-size:.9rem;}
+.notification-controls {position:fixed; bottom:12px; left:calc(50% + 120px); transform:translateX(-50%); z-index:10000; display:flex; gap:10px; align-items:center; padding:6px 12px; border:1px solid var(--border-color, #ddd); border-radius:12px; background:var(--bg-card, white); color:var(--text-primary); font-size:.75rem; box-shadow:0 4px 12px #0001;}
+@keyframes toast-in {from {opacity:0;transform:translateY(-10px)} to {opacity:1;transform:translateY(0)}}
+@media(max-width:768px) {
+ body[data-page="dashboard"] .home-stats {grid-template-columns:repeat(2, minmax(0, 1fr)) !important;}
+ .home-stats .stat-card {min-width:0; overflow-wrap:anywhere; overflow-x:hidden;}
+ .home-stats .stat-value {font-size:clamp(1.05rem, 3vw, 2rem);}
+ .home-stats {gap:10px;}
+ .home-stats .stat-card {padding:14px;}
+ .home-stats .stat-label {font-size:.8rem;}
+ .home-stats .stat-icon {width:34px;height:34px;font-size:1.1rem;}
+ .notification-controls {position:relative;bottom:auto;left:auto;transform:none;width:fit-content;margin:0 auto 75px;z-index:1;}
+ body[data-page="dashboard"] .grid-2 {min-width:0;}
+}
+@media print {#toast-region,.notification-controls,#install-banner {display:none !important;}}

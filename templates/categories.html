@@ -11,6 +11,7 @@
     </div>
     <div class="card-body">
         <form method="POST" action="{{ url_for('add_category') }}" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: end;">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
             <div class="form-group" style="flex: 2; min-width: 200px; margin-bottom: 0;">
                 <label class="form-label">Nome *</label>
                 <input type="text" name="name" class="form-control" placeholder="Nome da categoria" required>
@@ -82,7 +83,7 @@
                 <button type="button" 
                         class="btn btn-sm btn-icon" 
                         style="background: var(--info); color: white;" 
-                        onclick="editCategory({{ category.id }}, '{{ category.name }}', '{{ category.icon }}', '{{ category.color }}')" 
+                        onclick='editCategory({{ category.id|tojson }}, {{ category.name|tojson }}, {{ category.icon|tojson }}, {{ category.color|tojson }})' 
                         title="Editar">
                             <i class="fas fa-edit"></i>
                 </button>
@@ -90,6 +91,7 @@
                         action="{{ url_for('delete_category', id=category.id) }}" 
                         data-confirm="Tem certeza que deseja excluir esta categoria?" 
                         style="display: inline;">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-sm btn-icon" 
                         style="background: var(--danger); color: white;" 
                         title="Excluir">
@@ -127,6 +129,7 @@
                       box-shadow: var(--shadow-lg);">
         <h3 style="margin-bottom: 20px; font-size: 1.2rem;"><i class="fas fa-edit"></i> Editar Categoria</h3>
         <form id="editForm" method="POST" action="">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label class="form-label">Nome</label>
                 <input type="text" name="name" id="editName" class="form-control" required>

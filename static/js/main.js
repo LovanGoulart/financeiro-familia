@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Theme Toggle
-    const themeToggle = document.querySelector('.theme-toggle');
+    const themeToggles = document.querySelectorAll('.theme-toggle');
+    const themeToggle = themeToggles[0];
     const html = document.documentElement;
 
     // Verificar tema salvo
@@ -42,18 +43,19 @@ document.addEventListener('DOMContentLoaded', function() {
     updateThemeIcon(savedTheme);
 
     if (themeToggle) {
-        themeToggle.addEventListener('click', function() {
+        themeToggles.forEach(button => button.addEventListener('click', function() {
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             updateThemeIcon(newTheme);
-        });
+        }));
     }
 
     function updateThemeIcon(theme) {
         if (!themeToggle) return;
-        const icon = themeToggle.querySelector('i');
+        themeToggles.forEach(button => {
+        const icon = button.querySelector('i');
         if (icon) {
             if (theme === 'dark') {
                 icon.classList.remove('fa-moon');
@@ -63,12 +65,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 icon.classList.add('fa-moon');
             }
         }
+        });
     }
 
     // Fechar sidebar ao clicar fora (mobile)
     document.addEventListener('click', function(e) {
         if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('open')) {
-            if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+            if (!sidebar.contains(e.target) && !(menuToggle && menuToggle.contains(e.target))) {
                 sidebar.classList.remove('open');
             }
         }
@@ -108,9 +111,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name=csrf-token]').content,
                 }
             })
-            .then(response => response.json())
+            .then(response => { if (!response.ok) throw new Error('Falha ao salvar'); return response.json(); })
             .then(data => {
                 if (data.success) {
                     if (data.is_bought) {
@@ -120,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(() => { checkbox.checked = !checkbox.checked; window.financeToast?.('Não foi possível salvar. Atualize a página e tente novamente.', 'danger'); });
         });
     });
 
@@ -157,19 +161,19 @@ document.addEventListener('DOMContentLoaded', function() {
             formCard.innerHTML = `
                 <div class="user-form-header">
                     <i class="fas fa-user"></i>
-                    <span>Usuario ${i} ${i === 1 ? '(Administrador)' : ''}</span>
+                    <span>Usuário ${i} ${i === 1 ? '(Administrador)' : ''}</span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Nome Completo</label>
-                    <input type="text" name="name_${i}" class="form-control" placeholder="Ex: Joao Silva" required>
+                    <input type="text" name="name_${i}" class="form-control" placeholder="Ex: João Silva" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Username</label>
+                    <label class="form-label">Nome de usuário</label>
                     <input type="text" name="username_${i}" class="form-control" placeholder="Ex: joao" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Senha</label>
-                    <input type="password" name="password_${i}" class="form-control" placeholder="Minimo 6 caracteres" minlength="6" required>
+                    <input type="password" name="password_${i}" class="form-control" placeholder="Mínimo 6 caracteres" minlength="6" required>
                 </div>
             `;
             userFormsContainer.appendChild(formCard);
@@ -201,15 +205,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Charts
     initCharts();
 
-    // Number formatting
-    const currencyElements = document.querySelectorAll('.currency');
-    currencyElements.forEach(function(el) {
-        const value = parseFloat(el.textContent);
-        if (!isNaN(value)) {
-            el.textContent = formatCurrency(value);
-        }
-    });
-
     // Responsive tables
     const tables = document.querySelectorAll('.data-table');
     tables.forEach(function(table) {
@@ -230,6 +225,11 @@ function formatCurrency(value) {
 
 // Initialize Charts
 function initCharts() {
+    if (typeof Chart !== 'undefined') {
+        Chart.defaults.locale = 'pt-BR';
+        Chart.defaults.plugins.tooltip.callbacks.label = (ctx) => `${ctx.dataset.label || ctx.label || 'Total'}: ${formatCurrency(typeof ctx.parsed === 'number' ? ctx.parsed : ctx.parsed.y)}`;
+        Chart.defaults.scales.linear.ticks.callback = value => formatCurrency(value);
+    }
     // Category Pie Chart
     const categoryChartEl = document.getElementById('categoryChart');
     if (categoryChartEl && typeof Chart !== 'undefined') {

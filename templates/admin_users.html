@@ -11,12 +11,13 @@
     </div>
     <div class="card-body">
         <form method="POST" action="{{ url_for('admin_add_user') }}" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: end;">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
             <div class="form-group" style="flex: 2; min-width: 200px; margin-bottom: 0;">
                 <label class="form-label">Nome Completo *</label>
                 <input type="text" name="name" class="form-control" placeholder="Ex: Maria Silva" required>
             </div>
             <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
-                <label class="form-label">Username *</label>
+                <label class="form-label">Nome de usuário *</label>
                 <input type="text" name="username" class="form-control" placeholder="Ex: maria" required>
             </div>
             <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
@@ -62,6 +63,7 @@
     <form method="POST"
           action="{{ url_for('admin_change_password', id=member.id) }}"
           style="display: flex; align-items: center; gap: 8px;">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
 
         <input type="password"
                name="new_password"
@@ -106,6 +108,7 @@
           action="{{ url_for('admin_delete_user', id=member.id) }}"
           data-confirm="Tem certeza que deseja remover {{ member.name }}?"
           style="margin-left: -5px;">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
 
         <button type="submit"
                 class="btn btn-sm btn-icon"

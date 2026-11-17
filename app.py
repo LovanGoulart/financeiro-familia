@@ -13,6 +13,9 @@ Tecnologias: Python, Flask, SQLite, HTML5, CSS3, JavaScript, Chart.js
 
 import os
 import secrets
+from zoneinfo import ZoneInfo
+from decimal import Decimal, InvalidOperation
+import re
 from datetime import datetime, timedelta
 from functools import wraps
 from calendar import monthrange
@@ -26,8 +29,10 @@ from models.database import init_db, get_db_connection
 # CONFIGURACAO DA APLICACAO
 # ==============================================================================
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
-app.config['DATABASE'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database', 'finance.db')
+# Chave persistente: mantém as sessões válidas entre reinícios e workers.
+from enhancements import configure_app, next_payment_date, selected_period, now_br, record_event, parse_amount, normalize_date
+configure_app(app)
+app.config['DATABASE'] = os.environ.get('DATABASE_PATH', os.path.join(app.root_path, 'database', 'finance.db'))
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
 # Inicializar banco de dados
@@ -42,7 +47,7 @@ def format_date_br(date_obj):
     if isinstance(date_obj, str):
         # Se for string no formato do banco (YYYY-MM-DD), converte primeiro
         try:
-            date_obj = datetime.strptime(date_obj, '%Y-%m-%d')
+            date_obj = datetime.fromisoformat(date_obj)
         except ValueError:
             return date_obj
     if date_obj:
@@ -144,7 +149,7 @@ def get_family_member_ids(family_email):
 
 def get_month_range(year=None, month=None):
     """Retorna o primeiro e ultimo dia do mes especificado."""
-    now = datetime.now()
+    now = now_br()
     year = year or now.year
     month = month or now.month
 
@@ -160,133 +165,59 @@ def get_last_day_of_month(year, month):
     """Retorna o ultimo dia do mes."""
     return monthrange(year, month)[1]
 
+def generated_item(exp, due, kind, number=1):
+    item = dict(exp)
+    item.update(original_id=exp['id'], expense_date=due.strftime('%Y-%m-%d'),
+                expense_date_br=format_date_br(due), is_generated=True, generation_type=kind)
+    if kind == 'parcela':
+        item.update(id=f"inst_{exp['id']}_{number}", installment_number=number,
+                    description=f"{exp['description']} ({number}/{exp['installment_total']})")
+        if number == exp['installment_total']:
+            item['amount'] = round(exp['amount'] + exp['installment_remainder_cents'] / 100, 2)
+    else:
+        item['id'] = f"rec_{exp['id']}_{due:%Y%m%d}"
+    return item
+
+
+def scheduled_rows(conn, member_ids, flag):
+    if not member_ids:
+        return []
+    placeholders = ','.join('?' for _ in member_ids)
+    return conn.execute(f"SELECT e.*, u.name AS person_name, c.name AS category_name, c.color AS category_color FROM expenses e JOIN users u ON e.person_id=u.id LEFT JOIN categories c ON e.category_id=c.id WHERE e.person_id IN ({placeholders}) AND e.{flag}=1", member_ids).fetchall()
+
+
 def generate_recurring_expenses(conn, member_ids, target_year, target_month):
-    """
-    Gera registros virtuais de despesas recorrentes para o mes alvo.
-    Retorna lista de dicionarios com as despesas materializadas.
-    """
-    first_day, last_day = get_month_range(target_year, target_month)
-    target_date = datetime(target_year, target_month, 1)
-
-    # Buscar todas as despesas recorrentes ativas dos membros da familia
-    query = "SELECT e.*, u.name as person_name, c.name as category_name, c.color as category_color FROM expenses e JOIN users u ON e.person_id = u.id LEFT JOIN categories c ON e.category_id = c.id WHERE e.person_id IN ({}) AND e.is_recurring = 1 AND e.expense_date <= ? ORDER BY e.expense_date".format(','.join('?' * len(member_ids)))
-    recurring = conn.execute(query, (*member_ids, last_day)).fetchall()
-
+    first = datetime(target_year, target_month, 1)
+    last = first.replace(day=monthrange(target_year, target_month)[1])
     generated = []
-    for exp in recurring:
-        exp_date = datetime.strptime(exp['expense_date'], '%Y-%m-%d')
+    for exp in scheduled_rows(conn, member_ids, 'is_recurring'):
+        origin = datetime.strptime(exp['expense_date'], '%Y-%m-%d')
+        if origin > last:
+            continue
         freq = exp['recurring_frequency']
-
-        # Verificar se esta despesa deve aparecer no mes alvo
-        should_show = False
-
-        if freq == 'mensal':
-            # Aparece todo mes a partir da data inicial
-            should_show = (target_date.year > exp_date.year or 
-                            (target_date.year == exp_date.year and target_date.month >= exp_date.month))
-        elif freq == 'semanal':
-            # Calcula semanas entre a data inicial e o mes alvo
-            days_diff = (target_date - exp_date).days
-            weeks_diff = days_diff // 7
-            should_show = weeks_diff >= 0 and days_diff >= 0
-        elif freq == 'anual':
-            # Aparece no mesmo mes todo ano a partir do ano inicial
-            should_show = (target_date.year > exp_date.year or 
-                            (target_date.year == exp_date.year and target_date.month >= exp_date.month))
-            # Verifica se eh o mes correto para anual
-            if should_show:
-                should_show = (target_date.month == exp_date.month)
-
-        if should_show:
-            # Ajusta a data para o mes alvo
-            day = min(exp_date.day, get_last_day_of_month(target_year, target_month))
-            adjusted_date = datetime(target_year, target_month, day).strftime('%Y-%m-%d')
-
-            generated.append({
-                'id': "rec_{}_{}{:02d}".format(exp['id'], target_year, target_month),
-                'original_id': exp['id'],
-                'description': exp['description'],
-                'amount': exp['amount'],
-                'expense_date': adjusted_date,
-                'expense_date_br': format_date_br(adjusted_date),
-                'category_id': exp['category_id'],
-                'person_id': exp['person_id'],
-                'person_name': exp['person_name'],
-                'category_name': exp['category_name'],
-                'category_color': exp['category_color'],
-                'expense_type': exp['expense_type'],
-                'is_recurring': 1,
-                'recurring_frequency': freq,
-                'is_installment': 0,
-                'installment_total': 1,
-                'installment_number': 1,
-                'installment_group_id': None,
-                'notes': exp['notes'],
-                'created_by': exp['created_by'],
-                'created_at': exp['created_at'],
-                'is_generated': True,
-                'generation_type': 'recorrente'
-            })
-
+        if freq == 'semanal':
+            delta = max(0, (first - origin).days)
+            due = origin + timedelta(days=((delta + 6) // 7) * 7)
+            while due <= last:
+                generated.append(generated_item(exp, due, 'recorrente'))
+                due += timedelta(days=7)
+        elif freq == 'mensal' or (freq == 'anual' and origin.month == target_month):
+            due = first.replace(day=min(origin.day, last.day))
+            generated.append(generated_item(exp, due, 'recorrente'))
     return generated
+
 
 def generate_installment_expenses(conn, member_ids, target_year, target_month):
-    """
-    Gera registros virtuais de parcelamentos para o mes alvo.
-    Retorna lista de dicionarios com as parcelas materializadas.
-    """
-    first_day, last_day = get_month_range(target_year, target_month)
-    target_date = datetime(target_year, target_month, 1)
-
-    # Buscar todas as despesas parceladas dos membros da familia
-    query = "SELECT e.*, u.name as person_name, c.name as category_name, c.color as category_color FROM expenses e JOIN users u ON e.person_id = u.id LEFT JOIN categories c ON e.category_id = c.id WHERE e.person_id IN ({}) AND e.is_installment = 1 ORDER BY e.expense_date".format(','.join('?' * len(member_ids)))
-    installments = conn.execute(query, tuple(member_ids)).fetchall()
-
     generated = []
-    for exp in installments:
-        exp_date = datetime.strptime(exp['expense_date'], '%Y-%m-%d')
-        total_installments = exp['installment_total']
-
-        # Calcular em quais meses esta parcela deve aparecer
-        for i in range(total_installments):
-            # Calcula o mes desta parcela
-            month_offset = i
-            installment_month = exp_date.month + month_offset
-            installment_year = exp_date.year + (installment_month - 1) // 12
-            installment_month = ((installment_month - 1) % 12) + 1
-
-            # Verifica se esta parcela cai no mes alvo
-            if installment_year == target_year and installment_month == target_month:
-                day = min(exp_date.day, get_last_day_of_month(target_year, target_month))
-                adjusted_date = datetime(target_year, target_month, day).strftime('%Y-%m-%d')
-
-                generated.append({
-                    'id': "inst_{}_{}".format(exp['id'], i+1),
-                    'original_id': exp['id'],
-                    'description': "{} ({}/{})".format(exp['description'], i+1, total_installments),
-                    'amount': exp['amount'],
-                    'expense_date': adjusted_date,
-                    'expense_date_br': format_date_br(adjusted_date),
-                    'category_id': exp['category_id'],
-                    'person_id': exp['person_id'],
-                    'person_name': exp['person_name'],
-                    'category_name': exp['category_name'],
-                    'category_color': exp['category_color'],
-                    'expense_type': exp['expense_type'],
-                    'is_recurring': 0,
-                    'recurring_frequency': None,
-                    'is_installment': 1,
-                    'installment_total': total_installments,
-                    'installment_number': i + 1,
-                    'installment_group_id': exp['installment_group_id'],
-                    'notes': exp['notes'],
-                    'created_by': exp['created_by'],
-                    'created_at': exp['created_at'],
-                    'is_generated': True,
-                    'generation_type': 'parcela'
-                })
-
+    for exp in scheduled_rows(conn, member_ids, 'is_installment'):
+        origin = datetime.strptime(exp['expense_date'], '%Y-%m-%d')
+        offset = (target_year - origin.year) * 12 + target_month - origin.month
+        number = exp['installment_number'] + offset
+        if offset >= 0 and 1 <= number <= exp['installment_total']:
+            due = datetime(target_year, target_month, min(origin.day, monthrange(target_year, target_month)[1]))
+            generated.append(generated_item(exp, due, 'parcela', number))
     return generated
+
 
 def get_all_expenses_for_month(conn, member_ids, year, month, include_regular=True):
     """
@@ -395,7 +326,7 @@ def login():
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
+        username = request.form.get('username', '').strip().lower()
         password = request.form.get('password', '')
 
         if not username or not password:
@@ -460,7 +391,7 @@ def register():
             existing_user = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
             if existing_user:
                 conn.close()
-                flash('Username "{}" já está em uso. Escolha outro.'.format(username), 'warning')
+                flash('Nome de usuário "{}" já está em uso. Escolha outro.'.format(username), 'warning')
                 return render_template('register.html')
 
             role = 'admin' if i == 1 else 'user'
@@ -488,66 +419,7 @@ def logout():
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
 
-    message = None
-    category = None
-    new_password = None
-
-    if request.method == 'POST':
-
-        username = request.form.get('username', '').strip().lower()
-
-        if not username:
-
-            message = 'Informe um username.'
-            category = 'warning'
-
-            return render_template(
-                'forgot_password.html',
-                message=message,
-                category=category
-            )
-
-        conn = get_db_connection(app.config['DATABASE'])
-
-        user = conn.execute(
-            'SELECT * FROM users WHERE LOWER(username) = ?',
-            (username,)
-        ).fetchone()
-
-        if user:
-
-            # gera nova senha temporaria
-            # gera nova senha temporaria
-            # senha padrao
-            new_password = '123456'
-
-            # criptografa
-            password_hash = generate_password_hash(new_password)
-
-            # atualiza no banco
-            conn.execute(
-                'UPDATE users SET password_hash = ? WHERE id = ?',
-                (password_hash, user['id'])
-            )
-
-            conn.commit()
-
-            message = 'Senha redefinida com sucesso!'
-            category = 'success'
-
-        else:
-
-            message = 'Usuário não encontrado.'
-            category = 'danger'
-
-        conn.close()
-
-    return render_template(
-        'forgot_password.html',
-        message=message,
-        category=category,
-        new_password=new_password
-    )
+    return render_template('forgot_password.html')
 
 # ==============================================================================
 # ROTAS DO DASHBOARD
@@ -565,19 +437,7 @@ def dashboard(current_user, family_email, is_admin):
     member_count = len(family_members)
 
     # MES E ANO SELECIONADOS
-    today = datetime.now()
-
-    current_year = request.args.get(
-        'year',
-        today.year,
-        type=int
-    )
-
-    current_month = request.args.get(
-        'month',
-        today.month,
-        type=int
-    )
+    current_year, current_month = selected_period()
 
     # TOTAIS DO MES ATUAL (com recorrentes e parcelas materializadas)
     month_totals = get_expense_totals_for_month(conn, member_ids, current_year, current_month)
@@ -843,9 +703,8 @@ def expenses(current_user, family_email, is_admin):
     filter_type = request.args.get('type', '')
     filter_category = request.args.get('category', '')
     filter_person = request.args.get('person', '')
-    filter_month = request.args.get('month', datetime.now().strftime('%Y-%m'))
-
-    year, month = map(int, filter_month.split('-'))
+    year, month = selected_period(month_string=True)
+    filter_month = f'{month:02d}/{year}'
 
     # Buscar todas as despesas
     all_expenses = get_all_expenses_for_month(
@@ -933,16 +792,11 @@ def add_expense(current_user, family_email, is_admin):
         description = request.form.get('description', '').strip()
 
         # VALOR TOTAL INFORMADO PELO USUARIO
-        total_amount = float(
-            request.form.get('amount', 0)
-        )
+        total_amount = parse_amount(request.form.get('amount', ''))
 
-        expense_date = request.form.get(
-            'expense_date',
-            datetime.now().strftime('%Y-%m-%d')
-        )
+        expense_date = normalize_date(request.form.get('expense_date', ''))
 
-        category_id = request.form.get('category_id')
+        category_id = request.form.get('category_id') or None
 
         person_id = int(
             request.form.get('person_id', current_user['id'])
@@ -977,7 +831,7 @@ def add_expense(current_user, family_email, is_admin):
             )
         )
 
-        installment_number = 1
+        installment_number = int(request.form.get('installment_number', 1))
 
         if not description or total_amount <= 0:
 
@@ -1006,7 +860,7 @@ def add_expense(current_user, family_email, is_admin):
                 family_members=family_members,
                 expense=None,
                 action='add',
-                now=datetime.now()
+                now=next_payment_date()
             )
 
         member_ids = get_family_member_ids(
@@ -1018,6 +872,7 @@ def add_expense(current_user, family_email, is_admin):
             abort(403)
 
         installment_group_id = None
+        remainder_cents = 0
 
         # =========================
         # DIVISAO DAS PARCELAS
@@ -1025,15 +880,14 @@ def add_expense(current_user, family_email, is_admin):
         if is_installment and installment_total > 1:
 
             installment_group_id = "inst_{}_{}".format(
-                datetime.now().strftime('%Y%m%d%H%M%S'),
+                now_br().strftime('%Y%m%d%H%M%S'),
                 person_id
             )
 
             # divide o valor total
-            amount = round(
-                total_amount / installment_total,
-                2
-            )
+            cents = int(Decimal(str(total_amount)) * 100)
+            part_cents, remainder_cents = divmod(cents, installment_total)
+            amount = part_cents / 100
 
         else:
             amount = total_amount
@@ -1081,6 +935,8 @@ def add_expense(current_user, family_email, is_admin):
             )
         )
 
+        conn.execute('UPDATE expenses SET installment_remainder_cents = ? WHERE id = last_insert_rowid()', (remainder_cents,))
+        record_event(conn, family_email, current_user, 'add_expense')
         conn.commit()
         conn.close()
 
@@ -1111,7 +967,7 @@ def add_expense(current_user, family_email, is_admin):
         family_members=family_members,
         expense=None,
         action='add',
-        now=datetime.now()
+        now=next_payment_date()
     )
 
 @app.route('/expenses/edit/<int:id>', methods=['GET', 'POST'])
@@ -1138,9 +994,9 @@ def edit_expense(current_user, family_email, is_admin, id):
 
     if request.method == 'POST':
         description = request.form.get('description', '').strip()
-        amount = float(request.form.get('amount', 0))
-        expense_date = request.form.get('expense_date')
-        category_id = request.form.get('category_id')
+        amount = parse_amount(request.form.get('amount', ''))
+        expense_date = normalize_date(request.form.get('expense_date', ''))
+        category_id = request.form.get('category_id') or None
         person_id = int(request.form.get('person_id'))
         expense_type = request.form.get('expense_type', 'individual')
         notes = request.form.get('notes', '').strip()
@@ -1174,6 +1030,7 @@ def edit_expense(current_user, family_email, is_admin, id):
                             expense_type, is_recurring, recurring_frequency, None, 
                             is_installment, installment_total, installment_number, notes, id))
 
+        record_event(conn, family_email, current_user, 'edit_expense')
         conn.commit()
         conn.close()
         flash('Despesa atualizada com sucesso!', 'success')
@@ -1220,6 +1077,7 @@ def delete_expense(current_user, family_email, is_admin, id):
         return redirect(url_for('expenses'))
 
     conn.execute('DELETE FROM expenses WHERE id = ?', (id,))
+    record_event(conn, family_email, current_user, 'delete_expense')
     conn.commit()
     conn.close()
     flash('Despesa excluída com sucesso!', 'success')
@@ -1266,6 +1124,7 @@ def add_category(current_user, family_email, is_admin):
         'INSERT INTO categories (name, icon, color, family_email) VALUES (?, ?, ?, ?)',
         (name, icon, color, family_email)
     )
+    record_event(conn, family_email, current_user, 'add_category')
     conn.commit()
     conn.close()
 
@@ -1301,6 +1160,7 @@ def edit_category(current_user, family_email, is_admin, id):
         'UPDATE categories SET name = ?, icon = ?, color = ? WHERE id = ? AND family_email = ?',
         (name, icon, color, id, family_email)
     )
+    record_event(conn, family_email, current_user, 'edit_category')
     conn.commit()
     conn.close()
 
@@ -1336,7 +1196,9 @@ def delete_category(current_user, family_email, is_admin, id):
         flash('Não é possível excluir categoria em uso.', 'warning')
         return redirect(url_for('categories'))
 
+    conn.execute('UPDATE shopping_list SET category_id = NULL WHERE category_id = ?', (id,))
     conn.execute('DELETE FROM categories WHERE id = ? AND family_email = ?', (id, family_email))
+    record_event(conn, family_email, current_user, 'delete_category')
     conn.commit()
     conn.close()
 
@@ -1378,7 +1240,7 @@ def add_shopping_item(current_user, family_email, is_admin):
     """Adiciona item a lista de compras."""
     name = request.form.get('name', '').strip()
     quantity = request.form.get('quantity', '1').strip()
-    category_id = request.form.get('category_id')
+    category_id = request.form.get('category_id') or None
     notes = request.form.get('notes', '').strip()
 
     if not name:
@@ -1388,6 +1250,7 @@ def add_shopping_item(current_user, family_email, is_admin):
     conn = get_db_connection(app.config['DATABASE'])
     conn.execute('INSERT INTO shopping_list (name, quantity, category_id, notes, created_by) VALUES (?, ?, ?, ?, ?)',
                 (name, quantity, category_id, notes, current_user['id']))
+    record_event(conn, family_email, current_user, 'add_shopping_item')
     conn.commit()
     conn.close()
 
@@ -1413,6 +1276,7 @@ def toggle_shopping_item(current_user, family_email, is_admin, id):
 
     new_status = 0 if item['is_bought'] else 1
     conn.execute('UPDATE shopping_list SET is_bought = ? WHERE id = ?', (new_status, id))
+    record_event(conn, family_email, current_user, 'toggle_shopping_item')
     conn.commit()
     conn.close()
 
@@ -1436,6 +1300,7 @@ def delete_shopping_item(current_user, family_email, is_admin, id):
         abort(403)
 
     conn.execute('DELETE FROM shopping_list WHERE id = ?', (id,))
+    record_event(conn, family_email, current_user, 'delete_shopping_item')
     conn.commit()
     conn.close()
 
@@ -1456,8 +1321,7 @@ def reports(current_user, family_email, is_admin):
     family_members = get_family_members(family_email)
 
     report_type = request.args.get('type', 'monthly')
-    year = int(request.args.get('year', datetime.now().year))
-    month = int(request.args.get('month', datetime.now().month))
+    year, month = selected_period()
 
     # Usar a nova funcao para obter totais do mes
     month_totals = get_expense_totals_for_month(conn, member_ids, year, month)
@@ -1540,7 +1404,7 @@ def admin_users(current_user, family_email, is_admin):
 def admin_add_user(current_user, family_email, is_admin):
     """Admin adiciona novo usuario a familia."""
     name = request.form.get('name', '').strip()
-    username = request.form.get('username', '').strip().lower()
+    username = request.form.get('username', '').strip().lower().lower()
     password = request.form.get('password', '')
 
     if not name or not username or not password:
@@ -1555,12 +1419,13 @@ def admin_add_user(current_user, family_email, is_admin):
     existing = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
     if existing:
         conn.close()
-        flash('Username ja em uso.', 'warning')
+        flash('Nome de usuário ja em uso.', 'warning')
         return redirect(url_for('admin_users'))
 
     password_hash = generate_password_hash(password)
     conn.execute('INSERT INTO users (username, name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
                 (username, name, family_email, password_hash, 'user'))
+    record_event(conn, family_email, current_user, 'admin_add_user')
     conn.commit()
     conn.close()
 
@@ -1574,7 +1439,7 @@ def admin_add_user(current_user, family_email, is_admin):
 def admin_delete_user(current_user, family_email, is_admin, id):
     """Admin remove usuario da familia."""
     if id == current_user['id']:
-        flash('Voçe nao pode remover a si mesmo.', 'warning')
+        flash('Você não pode remover a si mesmo.', 'warning')
         return redirect(url_for('admin_users'))
 
     conn = get_db_connection(app.config['DATABASE'])
@@ -1586,7 +1451,9 @@ def admin_delete_user(current_user, family_email, is_admin, id):
 
     conn.execute('UPDATE expenses SET person_id = ?, created_by = ? WHERE person_id = ?', (current_user['id'], current_user['id'], id))
     conn.execute('UPDATE shopping_list SET created_by = ? WHERE created_by = ?', (current_user['id'], id))
+    conn.execute('UPDATE expenses SET created_by = ? WHERE created_by = ?', (current_user['id'], id))
     conn.execute('DELETE FROM users WHERE id = ?', (id,))
+    record_event(conn, family_email, current_user, 'admin_delete_user')
     conn.commit()
     conn.close()
 
@@ -1602,8 +1469,8 @@ def admin_change_password(current_user, family_email, is_admin, id):
 
     new_password = request.form.get('new_password', '').strip()
 
-    if len(new_password) < 4:
-        flash('A senha deve ter pelo menos 4 caracteres.', 'danger')
+    if len(new_password) < 6:
+        flash('A senha deve ter pelo menos 6 caracteres.', 'danger')
         return redirect(url_for('admin_users'))
 
     password_hash = generate_password_hash(new_password)
@@ -1611,8 +1478,8 @@ def admin_change_password(current_user, family_email, is_admin, id):
     conn = get_db_connection(app.config['DATABASE'])
 
     user = conn.execute(
-        'SELECT id, name FROM users WHERE id = ?',
-        (id,)
+        'SELECT id, name FROM users WHERE id = ? AND email = ?',
+        (id, family_email)
     ).fetchone()
 
     if not user:
@@ -1625,6 +1492,7 @@ def admin_change_password(current_user, family_email, is_admin, id):
         (password_hash, id)
     )
 
+    record_event(conn, family_email, current_user, 'admin_change_password')
     conn.commit()
     conn.close()
 
@@ -1644,8 +1512,7 @@ def api_dashboard_data(current_user, family_email, is_admin):
     """API para dados do dashboard."""
     conn = get_db_connection(app.config['DATABASE'])
     member_ids = get_family_member_ids(family_email)
-    current_year = datetime.now().year
-    current_month = datetime.now().month
+    current_year, current_month = selected_period()
 
     # Dados de categorias do mes atual
     month_totals = get_expense_totals_for_month(conn, member_ids, current_year, current_month)
@@ -1664,9 +1531,9 @@ def api_dashboard_data(current_user, family_email, is_admin):
     monthly_labels = []
     monthly_values = []
     for i in range(5, -1, -1):
-        month_date = datetime.now() - timedelta(days=i*30)
-        m_year = month_date.year
-        m_month = month_date.month
+        offset = current_year * 12 + current_month - 1 - i
+        m_year, m_month_zero = divmod(offset, 12)
+        m_month = m_month_zero + 1
         m_totals = get_expense_totals_for_month(conn, member_ids, m_year, m_month)
         monthly_labels.append(format_month_short_br(m_year, m_month))
         monthly_values.append(m_totals['total'])
@@ -1697,4 +1564,4 @@ def forbidden(error):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(threaded=True, host='0.0.0.0', port=port, debug=False)

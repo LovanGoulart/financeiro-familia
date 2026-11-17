@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Financeiro Familiar{% endblock %}
-{% block page_title %}Dashboard{% endblock %}
+{% block title %}Início - Financeiro Familiar{% endblock %}
+{% block page_title %}Início{% endblock %}
 
 {% block content %}
 
@@ -22,7 +22,7 @@
 
                 <select name="year" class="form-control" onchange="this.form.submit()">
 
-                    {% for y in range(2024, 2031) %}
+                    {% for y in range(current_br_year - 5, current_br_year + 11) %}
 
                     <option value="{{ y }}"
                         {% if current_year|int == y %}selected{% endif %}>
@@ -80,13 +80,14 @@
             </div>-->
 
         </form>
+        <p class="payment-hint">Previsão de pagamentos: {{ current_month_br }}. Ao abrir, o sistema sugere o mês seguinte ao atual.</p>
 
     </div>
 
 </div>
 
 <!-- RESUMO -->
-<div class="stats-grid">
+<div class="stats-grid home-stats">
 
     <div class="stat-card primary">
         <div class="stat-icon">
@@ -178,9 +179,9 @@
 
     <small style="display:block; margin-top:8px; color: var(--gray);">
         {% if spent_more %}
-            Gastou {{ "%.1f"|format(percent_change) }}% a mais que o mês passado
+            Gastou {{ ("%.1f"|format(percent_change))|replace(".", ",") }}% a mais que o mês passado
         {% else %}
-            Gastou {{ "%.1f"|format(percent_change|abs) }}% a menos que o mês passado
+            Gastou {{ ("%.1f"|format(percent_change|abs))|replace(".", ",") }}% a menos que o mês passado
         {% endif %}
     </small>
 
@@ -238,7 +239,7 @@
 
     <div class="card-body">
 
-        <div class="stats-grid">
+        <div class="stats-grid home-stats">
 
             <div class="stat-card primary">
 
@@ -520,20 +521,16 @@
 
                                     </div>
 
-                                    <td class="currency">
-                                        {{ expense.amount|currency_br }}
-                                    </td>
-
                                 </div>
-
                             </td>
+                            <td class="currency">{{ expense.amount|currency_br }}</td>
 
                             <td>
                                 {{ expense.person_name }}
                             </td>
 
                             <td>
-                                {{ expense.expense_date[8:10] }}/{{ expense.expense_date[5:7] }}/{{ expense.expense_date[2:4] }}
+                                {{ expense.expense_date|date_br }}
                             </td>
 
                         </tr>
@@ -620,7 +617,7 @@
                             </td>
 
                             <td>
-                                {{ inst.expense_date[8:10] }}/{{ inst.expense_date[5:7] }}/{{ inst.expense_date[2:4] }}
+                                {{ inst.expense_date|date_br }}
                             </td>
 
                         </tr>

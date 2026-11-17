@@ -1,3 +1,7 @@
+> **Atualização de 17/11/2026:** consulte [ATUALIZACAO.md](ATUALIZACAO.md) para instalar esta versão e [ANALISE_TECNICA.md](ANALISE_TECNICA.md) para a revisão e os testes.
+> A abertura padrão agora é no mês seguinte; a data da nova despesa representa o pagamento e já sugere esse mês.
+> Os prints abaixo retratam a versão anterior da interface.
+
 # 💰 Financeiro Família — Controle e Divisão de Gastos
 
 Aplicação web para organização financeira de casais e famílias, desenvolvida com Python, Flask e SQLite.
@@ -85,7 +89,7 @@ Consulta das movimentações recentes e dos próximos lançamentos de despesas p
 
 ### Registro de uma nova compra
 
-Formulário para informar descrição, valor, data, categoria, responsável e tipo da despesa, com opção de compra no cartão de crédito.
+Formulário para informar descrição, valor, data, categoria, responsável e tipo da despesa, com data de pagamento sugerida para o mês seguinte, voltada a compras no cartão de crédito.
 
 <a href="nova%20compra.png">
   <img src="nova%20compra.png" alt="Formulário de cadastro de uma nova compra" width="248">
